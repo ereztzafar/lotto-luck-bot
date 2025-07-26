@@ -9,7 +9,7 @@ from flatlib import const
 # 🎯 פרטי לידה אישיים
 BIRTH_DATE = '1970-11-22'
 BIRTH_TIME = '06:00'
-BIRTH_PLACE = GeoPos('32.0833', '34.8833')  # פתח תקווה
+BIRTH_PLACE = GeoPos(32.0833, 34.8833)   # פתח תקווה
 
 # 📦 טוען סודות מ־GitHub Actions
 def load_secrets():
