@@ -1,23 +1,17 @@
 import ephem
 import json
+import os
 import requests
 from datetime import datetime
 
-# טוען את הטוקן וה-Chat ID מקובץ הסודות
-def load_secrets():
-    with open("secrets.json", "r") as file:
-        data = json.load(file)
-        return data["BOT_TOKEN"], data["CHAT_ID"]
-
-# שליחת הודעה לטלגרם
 def send_telegram_message(message: str):
-    token, chat_id = load_secrets()
+    token = os.environ.get("TELEGRAM_TOKEN")
+    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
     response = requests.post(url, data=data)
-    print(f"📤 Status: {response.status_code} | {message}")
+    print(f"📤 סטטוס: {response.status_code} | {message}")
 
-# פונקציית חיזוי לפי מיקום כוכבים
 def get_astrology_forecast():
     now = datetime.utcnow()
 
@@ -37,7 +31,6 @@ def get_astrology_forecast():
 
 """
 
-    # ניתוח מזל
     if moon_sign == 'Virgo' and jup_sign in ['Taurus', 'Cancer']:
         forecast += "💡 הזמן מבורך! כדאי לבדוק אפשרויות למילוי לוטו או חישגד."
     elif moon_sign == 'Scorpio':
@@ -52,4 +45,5 @@ def get_astrology_forecast():
 if __name__ == "__main__":
     msg = get_astrology_forecast()
     send_telegram_message(msg)
+
 
