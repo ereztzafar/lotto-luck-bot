@@ -1,4 +1,4 @@
-name: Run Lotto Bot Every 3 Hours
+name: RUN Lotto Bot Every 3 Hours
 
 on:
   schedule:
@@ -25,5 +25,6 @@ jobs:
     - name: Run scheduler (once per activation)
       run: |
         python3 scheduler.py
+
 
 
