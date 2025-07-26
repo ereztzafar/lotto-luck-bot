@@ -1,56 +1,55 @@
-from flatlib.chart import Chart
-from flatlib.datetime import Datetime
-from flatlib.geopos import GeoPos
-from flatlib import const
+import ephem
+import json
 import requests
-import os
 from datetime import datetime
 
-# נתוני לידה של ארז
-BIRTH_DATE = '1970-11-22'
-BIRTH_TIME = '06:00'
-BIRTH_PLACE = GeoPos('32.0833', '34.8833')  # פתח תקווה
+# טוען את הטוקן וה-Chat ID מקובץ הסודות
+def load_secrets():
+    with open("secrets.json", "r") as file:
+        data = json.load(file)
+        return data["BOT_TOKEN"], data["CHAT_ID"]
 
 # שליחת הודעה לטלגרם
 def send_telegram_message(message: str):
-    token = os.getenv("TELEGRAM_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
-    requests.post(url, data=data)
+    response = requests.post(url, data=data)
+    print(f"📤 Status: {response.status_code} | {message}")
 
-# בניית מפת לידה
-def get_natal_chart():
-    dt = Datetime(BIRTH_DATE, BIRTH_TIME, '+02:00')
-    return Chart(dt, BIRTH_PLACE)
+# פונקציית חיזוי לפי מיקום כוכבים
+def get_astrology_forecast():
+    now = datetime.utcnow()
 
-# בניית מפת טרנזיט לזמן נוכחי
-def get_transit_chart():
-    now = datetime.now()
-    dt = Datetime(now.strftime('%Y-%m-%d'), now.strftime('%H:%M'), '+02:00')
-    return Chart(dt, BIRTH_PLACE)
+    sun = ephem.Sun(now)
+    moon = ephem.Moon(now)
+    jupiter = ephem.Jupiter(now)
 
-# ניתוח בסיסי של כוכבים בטרנזיט
-def analyze_transits(natal, transit):
-    results = []
-    for planet in [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS, const.JUPITER]:
-        nat = natal.get(planet)
-        trans = transit.get(planet)
-        angle = abs(nat.lon - trans.lon)
-        if angle < 8 or abs(angle - 360) < 8:
-            results.append(f"🔮 {planet} ב־קונבנציה (צמוד) – עוצמה גבוהה")
-        elif abs(angle - 180) < 8:
-            results.append(f"⚠️ {planet} באופוזיציה – אתגר זמני")
-    return results
+    sun_sign = ephem.constellation(sun)[1]
+    moon_sign = ephem.constellation(moon)[1]
+    jup_sign = ephem.constellation(jupiter)[1]
 
-# הרצת הבוט
+    forecast = f"""🔮 תחזית אסטרולוגית לשעה {now.strftime('%H:%M')}:
+
+☀️ השמש במזל {sun_sign}
+🌙 הירח במזל {moon_sign}
+♃ יופיטר במזל {jup_sign}
+
+"""
+
+    # ניתוח מזל
+    if moon_sign == 'Virgo' and jup_sign in ['Taurus', 'Cancer']:
+        forecast += "💡 הזמן מבורך! כדאי לבדוק אפשרויות למילוי לוטו או חישגד."
+    elif moon_sign == 'Scorpio':
+        forecast += "⚠️ ייתכנו מתחים פנימיים – להפעיל שיקול דעת."
+    elif jup_sign == 'Leo':
+        forecast += "🎉 יופיטר נותן דחיפה – פעל עם ביטחון!"
+    else:
+        forecast += "🕰 כרגע לא זוהתה השפעה מובהקת – המתן לשעה אחרת."
+
+    return forecast
+
 if __name__ == "__main__":
-    natal = get_natal_chart()
-    transit = get_transit_chart()
-    analysis = analyze_transits(natal, transit)
+    msg = get_astrology_forecast()
+    send_telegram_message(msg)
 
-    now = datetime.now().strftime("%H:%M %d/%m")
-    header = f"🪐 תחזית אסטרולוגית {now}"
-    message = '\n'.join([header] + analysis if analysis else [header, "היום אין השפעות משמעותיות."])
-
-    send_telegram_message(message)
