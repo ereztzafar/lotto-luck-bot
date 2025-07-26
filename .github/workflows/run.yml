@@ -1,33 +1,29 @@
-name: Daily Lotto Bot
+name: Run Lotto Bot Every 3 Hours
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # 06:00 IL
-    - cron: '0 6 * * *'   # 09:00 IL
-    - cron: '0 9 * * *'   # 12:00 IL
-    - cron: '0 12 * * *'  # 15:00 IL
-    - cron: '0 15 * * *'  # 18:00 IL
-    - cron: '0 18 * * *'  # 21:00 IL
+    - cron: '0 */3 * * *'  # כל 3 שעות
   workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
 
-      - name: Run the bot
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python lotto_bot.py
+    - name: Run scheduler (once per activation)
+      run: |
+        python3 scheduler.py
+
 
