@@ -6,49 +6,36 @@ import requests
 import os
 from datetime import datetime
 
-# פרטי לידה
+# פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
-BIRTH_PLACE = GeoPos('32n5', '34e53')  # פתח תקווה
+BIRTH_PLACE = GeoPos('32n5', '34e53')  # תקין לפי flatlib
 
-# קביעת אזור זמן לפי שעון קיץ/חורף בישראל
+# קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
 def get_timezone():
     today = datetime.utcnow()
     year = today.year
-    summer_start = datetime(year, 3, 28)  # שעון קיץ: מ-28/03
-    winter_start = datetime(year, 10, 30)  # שעון חורף: מ-30/10
+    summer_start = datetime(year, 3, 28)
+    winter_start = datetime(year, 10, 30)
+    return '+03:00' if summer_start <= today < winter_start else '+02:00'
 
-    if summer_start <= today < winter_start:
-        return '+03:00'  # שעון קיץ
-    else:
-        return '+02:00'  # שעון חורף
-
-# טעינת טוקן וצ'אט ID מתוך סודות GitHub
+# טעינת סודות מה־GitHub Secrets
 def load_secrets():
     token = os.getenv("TELEGRAM_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
     if not token or not chat_id:
-        raise Exception("❌ חסר TELEGRAM_TOKEN או TELEGRAM_CHAT_ID ב-secrets")
+        raise Exception("❌ חסר TELEGRAM_TOKEN או TELEGRAM_CHAT_ID ב־Secrets")
     return token, chat_id
 
-# שליחת הודעה לטלגרם
+# שליחת הודעה
 def send_telegram_message(message: str):
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
-
-    print(f"📡 שולח לטלגרם עם TOKEN {token[:10]}... ו-CHAT_ID {chat_id}")
-
     response = requests.post(url, data=data)
+    print(f"📤 Status: {response.status_code}")
 
-    print("📤 סטטוס שליחה:", response.status_code)
-    print("📨 תגובת שרת:", response.text)
-
-    if response.status_code != 200:
-        raise Exception("❌ שליחה לטלגרם נכשלה")
-
-
-# יצירת תחזית אסטרולוגית
+# חישוב תחזית אסטרולוגית
 def get_astrology_forecast():
     tz = get_timezone()
     now = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
@@ -66,6 +53,7 @@ def get_astrology_forecast():
 🌙 הירח במזל: {moon.sign} ({moon.lon}°)
 ♃ יופיטר במזל: {jupiter.sign} ({jupiter.lon}°)
 """
+
     if moon.sign == 'Virgo' and jupiter.sign in ['Taurus', 'Cancer']:
         forecast += "\n💡 זמן מזל גבוה! כדאי למלא לוטו או חישגד."
     elif moon.sign == 'Scorpio':
@@ -77,7 +65,7 @@ def get_astrology_forecast():
 
     return forecast.strip()
 
-# הרצה ושליחה
+# הפעלה
 if __name__ == "__main__":
     message = get_astrology_forecast()
     send_telegram_message(message)
