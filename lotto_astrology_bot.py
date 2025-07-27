@@ -8,7 +8,7 @@ from datetime import datetime
 # נתוני לידה — תאריך, שעה, מיקום (פתח תקווה)
 BIRTH_DATE = '1970-11-22'
 BIRTH_TIME = '06:00'
-BIRTH_PLACE = GeoPos(32.0833, 34.8833)  # ערכים מספריים, לא מחרוזת
+BIRTH_PLACE = GeoPos('32:5:0', '34:53:0')  # פתח תקווה (קו רוחב וקו אורך בפורמט D:M:S)
 
 # טוקן וצ'אט ID מה-secrets
 def load_secrets():
