@@ -8,7 +8,7 @@ from datetime import datetime
 
 # פרטי לידה – פתח תקווה
 date = Datetime('1970/11/22', '06:00', '+00:00')
-pos = GeoPos('32n5', '34e53')  # תקין לפי flatlib
+pos = GeoPos('32n05', '34e53')  # תקין לפי flatlib
 chart = Chart(date, pos)
 
 # קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
