@@ -7,9 +7,9 @@ import os
 from datetime import datetime
 
 # פרטי לידה – פתח תקווה
-BIRTH_DATE = '1970/11/22'
-BIRTH_TIME = '06:00'
-BIRTH_PLACE = GeoPos('32n5', '34e53')  # תקין לפי flatlib
+date = Datetime('1970/11/22', '06:00', '+00:00')
+pos = GeoPos('32n5', '34e53')  # תקין לפי flatlib
+chart = Chart(date, pos)
 
 # קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
 def get_timezone():
