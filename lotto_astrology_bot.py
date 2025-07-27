@@ -36,8 +36,17 @@ def send_telegram_message(message: str):
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
+
+    print(f"📡 שולח לטלגרם עם TOKEN {token[:10]}... ו-CHAT_ID {chat_id}")
+
     response = requests.post(url, data=data)
-    print(f"📤 Status: {response.status_code} | נשלח בהצלחה")
+
+    print("📤 סטטוס שליחה:", response.status_code)
+    print("📨 תגובת שרת:", response.text)
+
+    if response.status_code != 200:
+        raise Exception("❌ שליחה לטלגרם נכשלה")
+
 
 # יצירת תחזית אסטרולוגית
 def get_astrology_forecast():
