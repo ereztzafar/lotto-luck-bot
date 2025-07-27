@@ -1,4 +1,4 @@
-import subprocess
+# תוכן הקובץ: scheduler.py
+import os
+os.system("python3 lotto_astrology_bot.py")
 
-# מריץ את סקריפט התחזית
-subprocess.run(["python3", "lotto_astrology_bot.py"])
