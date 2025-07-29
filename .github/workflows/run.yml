@@ -2,8 +2,8 @@ name: RUN Lotto Bot Every 3 Hours
 
 on:
   schedule:
-    - cron: '0 */3 * * *'  # כל 3 שעות
-  workflow_dispatch:
+    - cron: '0 */3 * * *'  # הרצה כל 3 שעות
+  workflow_dispatch:       # מאפשר להריץ גם ידנית
 
 jobs:
   run-bot:
