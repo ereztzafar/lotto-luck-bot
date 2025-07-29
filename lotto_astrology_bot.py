@@ -1,7 +1,7 @@
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
-from flatlib import const
+from flatlib import const, ephem
 import requests
 import os
 from datetime import datetime
@@ -9,24 +9,15 @@ from datetime import datetime
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
-BIRTH_TZ = '+02:00'  # שעון חורף (ישראל)
-BIRTH_PLACE = GeoPos('32n05', '34e53')  # פתח תקווה
+BIRTH_PLACE = GeoPos('32n05', '34e53')  # תקין לפי flatlib
 
-# קביעת אזור זמן לפי תאריך (שעון חורף/קיץ בישראל)
+# קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
 def get_timezone():
-    now = datetime.utcnow()
-    year = now.year
-    # ישראל עוברת לשעון קיץ ביום שישי האחרון של מרץ
-    # וחוזרת לשעון חורף ביום ראשון האחרון של אוקטובר
-    dst_start = max(
-        datetime(year, 3, d) for d in range(25, 32)
-        if datetime(year, 3, d).weekday() == 4  # שישי
-    )
-    dst_end = max(
-        datetime(year, 10, d) for d in range(25, 32)
-        if datetime(year, 10, d).weekday() == 6  # ראשון
-    )
-    return '+03:00' if dst_start <= now < dst_end else '+02:00'
+    today = datetime.utcnow()
+    year = today.year
+    summer_start = datetime(year, 3, 28)
+    winter_start = datetime(year, 10, 30)
+    return '+03:00' if summer_start <= today < winter_start else '+02:00'
 
 # טעינת סודות מה־GitHub Secrets
 def load_secrets():
@@ -49,7 +40,11 @@ def get_astrology_forecast():
     tz = get_timezone()
     now = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
     dt = Datetime(now.split()[0], now.split()[1], tz)
-    chart = Chart(dt, BIRTH_PLACE)
+
+    try:
+        chart = Chart(dt, BIRTH_PLACE, IDs=ephem.LIST_OBJECTS)
+    except Exception as e:
+        return f"❌ שגיאה ביצירת מפת לידה: {e}"
 
     sun = chart.get(const.SUN)
     moon = chart.get(const.MOON)
@@ -58,21 +53,21 @@ def get_astrology_forecast():
     forecast = f"""
 🔮 תחזית אסטרולוגית לשעה {dt.time} (UTC{tz}):
 
-☀️ השמש במזל: {sun.sign} ({float(sun.lon):.2f}°)
-🌙 הירח במזל: {moon.sign} ({float(moon.lon):.2f}°)
-♃ יופיטר במזל: {jupiter.sign} ({float(jupiter.lon):.2f}°)
-""".strip()
+☀️ השמש במזל: {sun.sign} ({sun.lon:.2f}°)
+🌙 הירח במזל: {moon.sign} ({moon.lon:.2f}°)
+♃ יופיטר במזל: {jupiter.sign} ({jupiter.lon:.2f}°)
+"""
 
     if moon.sign == 'Virgo' and jupiter.sign in ['Taurus', 'Cancer']:
-        forecast += "\n\n💡 זמן מזל גבוה! כדאי למלא לוטו או חישגד."
+        forecast += "\n💡 זמן מזל גבוה! כדאי למלא לוטו או חישגד."
     elif moon.sign == 'Scorpio':
-        forecast += "\n\n⚠️ זהירות: עלולים להיות מתחים רגשיים."
+        forecast += "\n⚠️ זהירות: עלולים להיות מתחים רגשיים."
     elif jupiter.sign == 'Leo':
-        forecast += "\n\n🎉 הזדמנות נדירה לפעולה חיובית."
+        forecast += "\n🎉 הזדמנות נדירה לפעולה חיובית."
     else:
-        forecast += "\n\n🕰 אין השפעה אסטרולוגית מיוחדת כרגע."
+        forecast += "\n🕰 אין השפעה אסטרולוגית מיוחדת כרגע."
 
-    return forecast
+    return forecast.strip()
 
 # הפעלה
 if __name__ == "__main__":
