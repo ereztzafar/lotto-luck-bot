@@ -1,21 +1,19 @@
-import json
+import os
 import requests
 from datetime import datetime
 
-def load_secrets():
-    try:
-        with open("secrets.json", "r", encoding="utf-8") as file:
-            data = json.load(file)
-            return data["BOT_TOKEN"], data["CHAT_ID"]
-    except Exception as e:
-        print(f"❌ שגיאה בקריאת secrets.json: {e}")
+def send_telegram_message(message: str):
+    token = os.getenv("TELEGRAM_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+
+    if not token or not chat_id:
+        print("❌ חסרים ערכים ל־TELEGRAM_TOKEN או TELEGRAM_CHAT_ID במשתני סביבה.")
         exit(1)
 
-def send_telegram_message(message: str):
-    token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
     response = requests.post(url, data=data)
+
     if response.ok:
         print(f"📤 נשלחה הודעה לטלגרם ({response.status_code})")
     else:
@@ -41,6 +39,3 @@ def get_astrology_message():
 if __name__ == "__main__":
     message = get_astrology_message()
     send_telegram_message(message)
-
-
-
