@@ -1,7 +1,7 @@
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
-from flatlib import const, ephem
+from flatlib import const
 import os
 import requests
 from datetime import datetime
@@ -41,37 +41,42 @@ def get_astrology_forecast():
     now = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
     dt = Datetime(now.split()[0], now.split()[1], tz)
 
+    # יצירת רשימת כוכבים ידנית
+    objects = [
+        const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+        const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
+    ]
+
     try:
-        chart = Chart(dt, BIRTH_PLACE, IDs=ephem.LIST_OBJECTS)
+        chart = Chart(dt, BIRTH_PLACE, IDs=objects)
     except Exception as e:
         return f"❌ שגיאה ביצירת מפת לידה: {e}"
 
-    objects = {
-        "☀️ שמש": const.SUN,
-        "🌙 ירח": const.MOON,
-        "☿ מרקורי": const.MERCURY,
-        "♀ ונוס": const.VENUS,
-        "♂ מארס": const.MARS,
-        "♃ צדק": const.JUPITER,
-        "♄ שבתאי": const.SATURN,
-        "♅ אורנוס": const.URANUS,
-        "♆ נפטון": const.NEPTUNE,
-        "♇ פלוטו": const.PLUTO,
+    names = {
+        const.SUN: "☀️ שמש",
+        const.MOON: "🌙 ירח",
+        const.MERCURY: "☿ מרקורי",
+        const.VENUS: "♀ ונוס",
+        const.MARS: "♂ מארס",
+        const.JUPITER: "♃ צדק",
+        const.SATURN: "♄ שבתאי",
+        const.URANUS: "♅ אורנוס",
+        const.NEPTUNE: "♆ נפטון",
+        const.PLUTO: "♇ פלוטו",
     }
 
     forecast = f"🔮 תחזית אסטרולוגית ל־{dt.time} (UTC{tz}):\n\n"
     signs = {}
 
-    for name, obj in objects.items():
+    for obj in objects:
         planet = chart.get(obj)
         deg = int(planet.lon)
         min = int((planet.lon - deg) * 60)
-        forecast += f"{name} במזל {planet.sign} {deg}°{min:02d}′\n"
+        forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′\n"
         signs[obj] = planet.sign
 
     # ניתוח חכם לסיכויי זכייה
     score = 0
-
     if signs[const.JUPITER] in ['Taurus', 'Pisces', 'Cancer']:
         score += 2
     if signs[const.VENUS] in ['Leo', 'Libra']:
@@ -100,7 +105,6 @@ def get_astrology_forecast():
         level = "🔴 לא מומלץ היום – שמור את הכסף למחר."
 
     forecast += f"\n🎲 {level}"
-
     return forecast.strip()
 
 # הפעלה
