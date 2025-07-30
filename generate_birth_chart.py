@@ -8,7 +8,7 @@ import swisseph as swe
 # פרטי הלידה שלך
 birth_date = '1970-11-22'
 birth_time = '06:00'
-location = GeoPos('32.0871', '34.8864')  # פתח תקווה
+location = GeoPos('32n05', '34e53')  # פתח תקווה
 
 # Step 1: צור מפת לידה רגילה
 birth_dt = Datetime(birth_date, birth_time, '+02:00')
