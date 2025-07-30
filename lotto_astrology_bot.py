@@ -3,10 +3,8 @@ def get_astrology_forecast():
     now_utc = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
     dt = Datetime(now_utc.split()[0], now_utc.split()[1], tz)
 
-    # השעה האמיתית לפי ישראל
     now_local = datetime.now(timezone('Asia/Jerusalem')).strftime('%H:%M:%S')
 
-    # יצירת רשימת כוכבים
     objects = [
         const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
         const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
@@ -33,17 +31,22 @@ def get_astrology_forecast():
     forecast = f"🔮 תחזית אסטרולוגית ל־{now_local} (שעון ישראל):\n\n"
     signs = {}
     reasons = []
+    score = 0
 
     for obj in objects:
         planet = chart.get(obj)
         deg = int(planet.lon)
         min = int((planet.lon - deg) * 60)
-        forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′\n"
+        retro = " ℞" if planet.retro else ""
+        forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′{retro}\n"
         signs[obj] = planet.sign
 
-    # ניתוח חכם עם סיבות מפורטות
-    score = 0
+        # ניקוד שלילי על נסיגה של כוכבים משמעותיים
+        if planet.retro and obj in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
+            score -= 1
+            reasons.append(f"{names[obj]} בנסיגה – משפיע לרעה על המזל הכללי (-1)")
 
+    # ניקוד חיובי/שלילי לפי מיקום הכוכבים (לפי הקוד שלך)
     if signs[const.JUPITER] in ['Taurus', 'Pisces', 'Cancer']:
         score += 2
         reasons.append(f"♃ צדק במזל {signs[const.JUPITER]} – מזל טוב להצלחה וכסף (+2)")
@@ -80,7 +83,7 @@ def get_astrology_forecast():
         score += 1
         reasons.append("♆ נפטון בדגים – תחושת זרימה והרמוניה פנימית טובה להימורים (+1)")
 
-    # קביעת רמת מזל
+    # שלב הסיכום
     if score >= 4:
         level = "🟢 סיכוי גבוה לזכייה היום!"
     elif 1 <= score < 4:
@@ -88,8 +91,7 @@ def get_astrology_forecast():
     else:
         level = "🔴 לא מומלץ היום – שמור את הכסף למחר."
 
-    # הרכבת התחזית הסופית
-    forecast += "\n\n📌 נימוקים לתחזית:\n" + '\n'.join(f"- {reason}" for reason in reasons)
+    forecast += "\n\n📌 נימוקים לתחזית:\n" + '\n'.join(f"- {r}" for r in reasons)
     forecast += f"\n\n🎲 {level}"
 
     return forecast.strip()
