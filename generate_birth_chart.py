@@ -1,18 +1,61 @@
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib import const
+from flatlib import ephem
+import json
+import os
+import requests
 
-# נתוני לידה: תאריך, שעה, מיקום
-birth_dt = Datetime('1970/11/22', '06:00', '+02:00')
-birth_pos = GeoPos('32n05', '34e53')  # פתח תקווה
+# פרטי לידה – פתח תקווה
+birth_date = '1970/11/22'
+birth_time = '06:00'
+timezone = '+02:00'
+birth_pos = GeoPos('32n05', '34e53')
+birth_dt = Datetime(birth_date, birth_time, timezone)
 
-# רק גרמי שמיים רגילים: שמש, ירח, מרקורי, ונוס, מארס, צדק, שבתאי, אוראנוס, נפטון, פלוטו
-objects = const.LIST_OBJECTS  # אין לילית, אין אפוגיאה
+# רק הכוכבים המרכזיים (ללא כירון ולילית)
+objects = ephem.MAJOR_OBJECTS
 
-# צור את מפת הלידה
+# יצירת מפת לידה
 chart = Chart(birth_dt, birth_pos, IDs=objects)
 
-# הדפס את מיקום כל גרם שמיים
-for obj in chart.objects:
-    print(f'{obj.id}: {obj.sign} {obj.lon}')
+# שמירת מפת הלידה לקובץ JSON
+birth_data = {}
+for obj in objects:
+    planet = chart.get(obj)
+    deg = int(planet.lon)
+    min = int((planet.lon - deg) * 60)
+    birth_data[obj] = {
+        'sign': planet.sign,
+        'lon_deg': deg,
+        'lon_min': min
+    }
+
+# שמירה לקובץ
+file_path = 'birth_chart.json'
+with open(file_path, 'w', encoding='utf-8') as f:
+    json.dump(birth_data, f, ensure_ascii=False, indent=2)
+
+print("✅ הקובץ birth_chart.json נוצר בהצלחה")
+
+# שליחת הקובץ לטלגרם
+def send_json_to_telegram(file_path, token, chat_id):
+    with open(file_path, 'rb') as file:
+        response = requests.post(
+            f'https://api.telegram.org/bot{token}/sendDocument',
+            data={'chat_id': chat_id},
+            files={'document': file}
+        )
+    if response.status_code == 200:
+        print("✅ הקובץ נשלח בהצלחה לטלגרם")
+    else:
+        print("❌ שגיאה בשליחה לטלגרם:", response.text)
+
+# שליפה מה־ENV
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
+if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
+    send_json_to_telegram(file_path, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
+else:
+    print("⚠️ לא הוגדרו משתני סביבה TELEGRAM_TOKEN ו־CHAT_ID")
