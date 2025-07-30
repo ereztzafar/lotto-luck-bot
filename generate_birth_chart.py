@@ -4,7 +4,7 @@ from flatlib.geopos import GeoPos
 from flatlib import const
 
 # נתוני לידה: תאריך, שעה, מיקום
-birth_dt = Datetime('1970-11-22', '06:00', '+02:00')
+birth_dt = Datetime('1970/11/22', '06:00', '+02:00')
 birth_pos = GeoPos('32.0871', '34.8869')  # פתח תקווה
 
 # רק גרמי שמיים רגילים: שמש, ירח, מרקורי, ונוס, מארס, צדק, שבתאי, אוראנוס, נפטון, פלוטו
