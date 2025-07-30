@@ -6,6 +6,7 @@ import os
 import requests
 from datetime import datetime, timedelta
 from pytz import timezone
+from flatlib import dignities
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
@@ -46,8 +47,9 @@ def get_lucky_hours(date_str, tz):
         flat_dt = Datetime(dt.strftime('%Y/%m/%d'), dt.strftime('%H:%M'), tz)
         chart = Chart(flat_dt, BIRTH_PLACE)
         asc = chart.get(const.ASC)
-        ruler = chart.get(asc.ruler)
-        if ruler.id in lucky_planets:
+        asc_sign = asc.sign
+        ruler_id = dignities.ruler(asc_sign)  # ← שליט המזל של האופק
+        if ruler_id in lucky_planets:
             result.append(dt.strftime('%H:%M'))
     return result
 
