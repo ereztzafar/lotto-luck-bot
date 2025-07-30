@@ -76,7 +76,7 @@ def get_astrology_forecast():
         planet = chart.get(obj)
         deg = int(planet.lon)
         min = int((planet.lon - deg) * 60)
-        retro = " ℞" if planet.retro else ""
+        retro = " ℞" if hasattr(planet, 'retro') and planet.retro else ""
         forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′{retro}\n"
         signs[obj] = planet.sign
 
