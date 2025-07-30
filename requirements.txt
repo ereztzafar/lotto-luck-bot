@@ -1,5 +1,5 @@
 flatlib==0.2.0
 requests
-pyswisseph
+
 
 
