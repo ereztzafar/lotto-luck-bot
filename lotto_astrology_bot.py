@@ -1,7 +1,7 @@
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
-from flatlib import const
+from flatlib import const, aspects
 import os
 import requests
 from datetime import datetime, timedelta
@@ -51,6 +51,23 @@ def get_lucky_hours(date_str, tz):
             result.append(dt.strftime('%H:%M'))
     return result
 
+# השוואת מפת טרנזיט למפת לידה
+def compare_transit_to_birth(transit_chart, birth_chart):
+    relevant = [
+        const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+        const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
+    ]
+    results = []
+    for t_obj in relevant:
+        for b_obj in relevant:
+            angle = aspects.getAspect(transit_chart.get(t_obj), birth_chart.get(b_obj))
+            if angle:
+                aspect_name = angle[0]
+                orb = angle[1]
+                if abs(orb) <= 3:  # רק אם הזווית קרובה (אורב קטן)
+                    results.append(f"{t_obj} {aspect_name} ל־{b_obj} (אורב {orb:.1f}°)")
+    return results
+
 # התחזית האסטרולוגית + שעות מזל
 def get_astrology_forecast():
     tz = get_timezone()
@@ -65,38 +82,34 @@ def get_astrology_forecast():
     ]
 
     names = {
-        const.SUN: "☀️ שמש",
-        const.MOON: "🌙 ירח",
-        const.MERCURY: "☿ מרקורי",
-        const.VENUS: "♀ ונוס",
-        const.MARS: "♂ מארס",
-        const.JUPITER: "♃ צדק",
-        const.SATURN: "♄ שבתאי",
-        const.URANUS: "♅ אורנוס",
-        const.NEPTUNE: "♆ נפטון",
-        const.PLUTO: "♇ פלוטו",
+        const.SUN: "☀️ שמש", const.MOON: "🌙 ירח", const.MERCURY: "☿ מרקורי",
+        const.VENUS: "♀ ונוס", const.MARS: "♂ מארס", const.JUPITER: "♃ צדק",
+        const.SATURN: "♄ שבתאי", const.URANUS: "♅ אורנוס", const.NEPTUNE: "♆ נפטון", const.PLUTO: "♇ פלוטו",
     }
 
     try:
-        chart = Chart(dt, BIRTH_PLACE, IDs=objects)
+        transit_chart = Chart(dt, BIRTH_PLACE, IDs=objects)
+        birth_dt = Datetime(BIRTH_DATE, BIRTH_TIME, tz)
+        birth_chart = Chart(birth_dt, BIRTH_PLACE, IDs=objects)
     except Exception as e:
-        return f"❌ שגיאה ביצירת מפת לידה: {e}"
+        return f"❌ שגיאה ביצירת מפות: {e}"
 
-    forecast = f"🔮 תחזית אסטרולוגית ל־{local_now} (שעון ישראל):\n\n"
+    forecast = f"🔭 תחזית ל־{local_now} (שעון ישראל):\n\n"
     signs = {}
     score = 0
     reasons = []
 
+    # מיקום כוכבים
     for obj in objects:
-        planet = chart.get(obj)
+        planet = transit_chart.get(obj)
         deg = int(planet.lon)
         min = int((planet.lon - deg) * 60)
         retro = " ℞" if hasattr(planet, 'retro') and planet.retro else ""
         forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′{retro}\n"
         signs[obj] = planet.sign
 
-        if hasattr(planet, 'retro') and planet.retro and obj in [
-            const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
+        # ניקוד
+        if hasattr(planet, 'retro') and planet.retro and obj in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
             score -= 1
             reasons.append(f"{names[obj]} בנסיגה – עלול לעכב מזל והצלחה (-1)")
 
@@ -129,7 +142,7 @@ def get_astrology_forecast():
         score += 1
         reasons.append("♆ נפטון בדגים – תחושת הרמוניה וזרימה טובה להימורים (+1)")
 
-    # תחזית סופית
+    # תחזית כללית
     if score >= 4:
         level = "🟢 סיכוי גבוה לזכייה היום!"
     elif 1 <= score < 4:
@@ -141,9 +154,15 @@ def get_astrology_forecast():
     lucky_hours = get_lucky_hours(today_str, tz)
     hours_str = ', '.join(lucky_hours) if lucky_hours else "אין שעות מזל היום."
 
+    # זוויות בין הטרנזיט ללידה
+    transit_aspects = compare_transit_to_birth(transit_chart, birth_chart)
+    aspects_str = "\n".join(f"🔹 {a}" for a in transit_aspects) if transit_aspects else "לא נמצאו זוויות דומיננטיות."
+
     forecast += "\n\n🕰️ שעות מזל להיום:\n" + hours_str
     forecast += "\n\n📌 נימוקים לתחזית:\n" + '\n'.join(f"- {r}" for r in reasons)
+    forecast += "\n\n🔁 זוויות בין כוכבי הטרנזיט למפת הלידה:\n" + aspects_str
     forecast += f"\n\n🎲 {level}"
+
     return forecast.strip()
 
 # הרצה
