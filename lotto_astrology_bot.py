@@ -6,12 +6,27 @@ import os
 import requests
 from datetime import datetime, timedelta
 from pytz import timezone
-from flatlib import dignities
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 BIRTH_PLACE = GeoPos('32n05', '34e53')
+
+# טבלת שליטים קלאסיים של המזלות
+RULERS = {
+    'Aries': const.MARS,
+    'Taurus': const.VENUS,
+    'Gemini': const.MERCURY,
+    'Cancer': const.MOON,
+    'Leo': const.SUN,
+    'Virgo': const.MERCURY,
+    'Libra': const.VENUS,
+    'Scorpio': const.MARS,
+    'Sagittarius': const.JUPITER,
+    'Capricorn': const.SATURN,
+    'Aquarius': const.SATURN,
+    'Pisces': const.JUPITER,
+}
 
 # קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
 def get_timezone():
@@ -48,7 +63,7 @@ def get_lucky_hours(date_str, tz):
         chart = Chart(flat_dt, BIRTH_PLACE)
         asc = chart.get(const.ASC)
         asc_sign = asc.sign
-        ruler_id = dignities.ruler(asc_sign)  # ← שליט המזל של האופק
+        ruler_id = RULERS.get(asc_sign)  # ← שליט האופק מתוך טבלת RULERS
         if ruler_id in lucky_planets:
             result.append(dt.strftime('%H:%M'))
     return result
@@ -66,7 +81,7 @@ def compare_transit_to_birth(transit_chart, birth_chart):
             if angle:
                 aspect_name = angle[0]
                 orb = angle[1]
-                if abs(orb) <= 3:  # רק אם הזווית קרובה (אורב קטן)
+                if abs(orb) <= 3:
                     results.append(f"{t_obj} {aspect_name} ל־{b_obj} (אורב {orb:.1f}°)")
     return results
 
@@ -101,7 +116,6 @@ def get_astrology_forecast():
     score = 0
     reasons = []
 
-    # מיקום כוכבים
     for obj in objects:
         planet = transit_chart.get(obj)
         deg = int(planet.lon)
@@ -110,12 +124,10 @@ def get_astrology_forecast():
         forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′{retro}\n"
         signs[obj] = planet.sign
 
-        # ניקוד
         if hasattr(planet, 'retro') and planet.retro and obj in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
             score -= 1
             reasons.append(f"{names[obj]} בנסיגה – עלול לעכב מזל והצלחה (-1)")
 
-    # ניקוד לפי מזלות
     if signs[const.JUPITER] in ['Taurus', 'Pisces', 'Cancer']:
         score += 2
         reasons.append(f"♃ צדק במזל {signs[const.JUPITER]} – מזל טוב להצלחה וכסף (+2)")
@@ -144,7 +156,6 @@ def get_astrology_forecast():
         score += 1
         reasons.append("♆ נפטון בדגים – תחושת הרמוניה וזרימה טובה להימורים (+1)")
 
-    # תחזית כללית
     if score >= 4:
         level = "🟢 סיכוי גבוה לזכייה היום!"
     elif 1 <= score < 4:
@@ -152,11 +163,8 @@ def get_astrology_forecast():
     else:
         level = "🔴 לא מומלץ היום – שמור את הכסף למחר."
 
-    # שעות מזל
     lucky_hours = get_lucky_hours(today_str, tz)
     hours_str = ', '.join(lucky_hours) if lucky_hours else "אין שעות מזל היום."
-
-    # זוויות בין הטרנזיט ללידה
     transit_aspects = compare_transit_to_birth(transit_chart, birth_chart)
     aspects_str = "\n".join(f"🔹 {a}" for a in transit_aspects) if transit_aspects else "לא נמצאו זוויות דומיננטיות."
 
