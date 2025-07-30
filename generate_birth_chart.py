@@ -2,7 +2,6 @@ from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib import const
-import json
 import os
 import requests
 
@@ -13,7 +12,7 @@ timezone = '+02:00'
 birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
-# הכוכבים המרכזיים בלבד – תואמים 100% ל־pyswisseph
+# כוכבים עיקריים בלבד
 objects = [
     const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
@@ -22,43 +21,31 @@ objects = [
 # יצירת מפת לידה
 chart = Chart(birth_dt, birth_pos, IDs=objects)
 
-# יצירת נתונים
-birth_data = {}
+# בניית טקסט יפה
+lines = ["🌟 מפת לידה (22.11.1970 06:00 פתח תקווה):"]
 for obj in objects:
     planet = chart.get(obj)
     deg = int(planet.lon)
     min = int((planet.lon - deg) * 60)
-    birth_data[obj] = {
-        'sign': planet.sign,
-        'lon_deg': deg,
-        'lon_min': min
-    }
+    lines.append(f"{obj:<8}: {deg}°{min:02}′ {planet.sign}")
 
-# שמירה לקובץ JSON
-file_path = 'birth_chart.json'
-with open(file_path, 'w', encoding='utf-8') as f:
-    json.dump(birth_data, f, ensure_ascii=False, indent=2)
+msg = '\n'.join(lines)
 
-print("✅ הקובץ birth_chart.json נוצר בהצלחה")
-
-# שליחת הקובץ לטלגרם
-def send_json_to_telegram(file_path, token, chat_id):
-    with open(file_path, 'rb') as file:
-        response = requests.post(
-            f'https://api.telegram.org/bot{token}/sendDocument',
-            data={'chat_id': chat_id},
-            files={'document': file}
-        )
+# שליחת טקסט לטלגרם
+def send_telegram_message(text, token, chat_id):
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    data = {'chat_id': chat_id, 'text': text}
+    response = requests.post(url, data=data)
     if response.status_code == 200:
-        print("✅ הקובץ נשלח בהצלחה לטלגרם")
+        print("✅ נשלח בהצלחה לטלגרם")
     else:
-        print("❌ שגיאה בשליחה לטלגרם:", response.text)
+        print("❌ שגיאה בשליחה:", response.text)
 
-# שליפת משתני סביבה
+# משתני סביבה
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
-    send_json_to_telegram(file_path, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
+    send_telegram_message(msg, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
 else:
     print("⚠️ לא הוגדרו משתני סביבה TELEGRAM_TOKEN ו־TELEGRAM_CHAT_ID")
