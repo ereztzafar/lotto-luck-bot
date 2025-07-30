@@ -6,7 +6,7 @@ from flatlib import const
 import swisseph as swe
 
 # פרטי הלידה שלך
-birth_date = '1970-11-22'
+birth_date = '1970/11/22'
 birth_time = '06:00'
 location = GeoPos('32n05', '34e53')  # פתח תקווה
 
