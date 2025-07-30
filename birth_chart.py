@@ -11,12 +11,15 @@ timezone = '+02:00'  # חורף
 birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
+# כולל כל הכוכבים המרכזיים + צ'ירון ולילית
+objects = ephem.MAJOR_OBJECTS + [ephem.CHIRON, ephem.LILITH]
+
 # יצירת מפת לידה
-chart = Chart(birth_dt, birth_pos, IDs=ephem.MAJOR_OBJECTS)
+chart = Chart(birth_dt, birth_pos, IDs=objects)
 
 # שמירת הכוכבים ומיקומם בקובץ JSON
 birth_data = {}
-for obj in ephem.MAJOR_OBJECTS:
+for obj in objects:
     planet = chart.get(obj)
     deg = int(planet.lon)
     min = int((planet.lon - deg) * 60)
@@ -29,4 +32,4 @@ for obj in ephem.MAJOR_OBJECTS:
 with open('birth_chart.json', 'w', encoding='utf-8') as f:
     json.dump(birth_data, f, ensure_ascii=False, indent=2)
 
-print("✅ מפת הלידה נשמרה בהצלחה (birth_chart.json)")
+print("✅ מפת הלידה נשמרה בהצלחה (כולל Chiron ו-Lilith)")
