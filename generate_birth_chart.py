@@ -15,7 +15,7 @@ birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
 # כוכבים רגילים + לילית (אבל בלי כירון עדיין)
-objects = const.LIST_OBJECTS + [const.LILITH]
+objects = LIST_OBJECTS + ['LILITH', 'CHIRON']
 chart = Chart(birth_dt, birth_pos, IDs=objects)
 
 # תוצאה סופית
