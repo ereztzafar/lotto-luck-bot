@@ -13,7 +13,7 @@ timezone = '+02:00'
 birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
-# שימוש רק בכוכבים שתואמים ל־pyswisseph
+# הכוכבים המרכזיים בלבד – תואמים 100% ל־pyswisseph
 objects = [
     const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
@@ -22,7 +22,7 @@ objects = [
 # יצירת מפת לידה
 chart = Chart(birth_dt, birth_pos, IDs=objects)
 
-# שמירת מפת הלידה לקובץ JSON
+# יצירת נתונים
 birth_data = {}
 for obj in objects:
     planet = chart.get(obj)
@@ -34,7 +34,7 @@ for obj in objects:
         'lon_min': min
     }
 
-# שמירה לקובץ
+# שמירה לקובץ JSON
 file_path = 'birth_chart.json'
 with open(file_path, 'w', encoding='utf-8') as f:
     json.dump(birth_data, f, ensure_ascii=False, indent=2)
@@ -54,7 +54,7 @@ def send_json_to_telegram(file_path, token, chat_id):
     else:
         print("❌ שגיאה בשליחה לטלגרם:", response.text)
 
-# שליפה מה־ENV
+# שליפת משתני סביבה
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
