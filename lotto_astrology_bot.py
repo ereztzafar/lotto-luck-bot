@@ -76,19 +76,19 @@ def compare_transit_to_birth(transit_chart, birth_chart):
         const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
     ]
     
-    # הגדרת זוויות עיקריות (מאחר ואין ב-flatlib משתנה קבוע כזה)
-    MAJOR_ASPECTS = [0, 60, 90, 120, 180]  # אלו הזוויות של האספקטים המרכזיים
+    MAJOR_ASPECTS = [0, 60, 90, 120, 180]  # זוויות עיקריות
     
     results = []
     for t_obj in relevant:
         for b_obj in relevant:
             angle = aspects.getAspect(transit_chart.get(t_obj), birth_chart.get(b_obj), MAJOR_ASPECTS)
             if angle:
-               aspect_name = angle.type
+                aspect_name = angle.type
                 orb = angle.orb
                 if abs(orb) <= 3:
                     results.append(f"{t_obj} {aspect_name} ל־{b_obj} (אורב {orb:.1f}°)")
     return results
+
 
 
 
