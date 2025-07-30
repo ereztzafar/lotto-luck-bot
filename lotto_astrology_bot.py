@@ -5,6 +5,7 @@ from flatlib import const
 import os
 import requests
 from datetime import datetime
+from pytz import timezone
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
@@ -33,7 +34,8 @@ def send_telegram_message(message: str):
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
     response = requests.post(url, data=data)
-    print(f"📤 Status: {response.status_code}")
+    now = datetime.now(timezone('Asia/Jerusalem'))
+    print(f"🔮 תחזית אסטרולוגית ל־{now.strftime('%H:%M:%S')} (שעון ישראל):")
 
 # תחזית אסטרולוגית מלאה
 def get_astrology_forecast():
