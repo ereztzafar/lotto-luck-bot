@@ -22,13 +22,12 @@ def get_body_position(body_id, date_str):
     return lon
 
 # Step 3: הוספת כוכבים ידניים (Lilith ו־Chiron) למפה
-LILITH_ID = swe.SE_MEAN_APOG
 CHIRON_ID = swe.SE_CHIRON
 
-lilith_lon = get_body_position(LILITH_ID, birth_date)
+
 chiron_lon = get_body_position(CHIRON_ID, birth_date)
 
-print(f"🌑 Lilith (Mean Apogee): {lilith_lon:.2f}°")
+
 print(f"🧬 Chiron: {chiron_lon:.2f}°")
 
 # אם תרצה, אפשר לשלב אותם גם לתוך גרף או ל־chart.objects
