@@ -1,0 +1,29 @@
+name: Generate Birth Chart
+
+on:
+  workflow_dispatch:  # מאפשר להריץ ידנית
+
+jobs:
+  run-generator:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: pip install flatlib
+
+    - name: Run script
+      run: python generate_birth_chart.py
+
+    - name: Upload output file
+      uses: actions/upload-artifact@v3
+      with:
+        name: birth_chart
+        path: birth_chart.json
