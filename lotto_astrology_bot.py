@@ -69,21 +69,27 @@ def get_lucky_hours(date_str, tz):
     return result
 
 # השוואת מפת טרנזיט למפת לידה
+# השוואת מפת טרנזיט למפת לידה
 def compare_transit_to_birth(transit_chart, birth_chart):
     relevant = [
         const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
         const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
     ]
+    
+    # הגדרת זוויות עיקריות (מאחר ואין ב-flatlib משתנה קבוע כזה)
+    MAJOR_ASPECTS = ['CONJUNCTION', 'SEXTILE', 'SQUARE', 'TRINE', 'OPPOSITION']
+    
     results = []
     for t_obj in relevant:
         for b_obj in relevant:
-            angle = aspects.getAspect(transit_chart.get(t_obj), birth_chart.get(b_obj), aspects.MAJOR_ASPECTS)
+            angle = aspects.getAspect(transit_chart.get(t_obj), birth_chart.get(b_obj), MAJOR_ASPECTS)
             if angle:
                 aspect_name = angle[0]
                 orb = angle[1]
                 if abs(orb) <= 3:
                     results.append(f"{t_obj} {aspect_name} ל־{b_obj} (אורב {orb:.1f}°)")
     return results
+
 
 
 # התחזית האסטרולוגית + שעות מזל
