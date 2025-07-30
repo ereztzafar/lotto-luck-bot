@@ -1,23 +1,27 @@
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib import const, ephem
+from flatlib import const
 import json
 
 # פרטי לידה – פתח תקווה
 birth_date = '1970/11/22'
 birth_time = '06:00'
-timezone = '+02:00'  # חורף
+timezone = '+02:00'
 birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
-# כולל כל הכוכבים המרכזיים + צ'ירון ולילית
-objects = ephem.MAJOR_OBJECTS + [ephem.CHIRON, ephem.LILITH]
+# רשימת כל הכוכבים כולל Chiron ו־Lilith
+objects = [
+    const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+    const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
+    const.CHIRON, const.LILITH
+]
 
 # יצירת מפת לידה
 chart = Chart(birth_dt, birth_pos, IDs=objects)
 
-# שמירת הכוכבים ומיקומם בקובץ JSON
+# שמירה לקובץ JSON
 birth_data = {}
 for obj in objects:
     planet = chart.get(obj)
