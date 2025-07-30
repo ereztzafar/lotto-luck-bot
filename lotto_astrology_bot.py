@@ -33,15 +33,16 @@ def send_telegram_message(message: str):
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
-    response = requests.post(url, data=data)
-    now = datetime.now(timezone('Asia/Jerusalem'))
-    print(f"🔮 תחזית אסטרולוגית ל־{now.strftime('%H:%M:%S')} (שעון ישראל):")
+    requests.post(url, data=data)
 
 # תחזית אסטרולוגית מלאה
 def get_astrology_forecast():
     tz = get_timezone()
-    now = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
-    dt = Datetime(now.split()[0], now.split()[1], tz)
+    now_utc = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
+    dt = Datetime(now_utc.split()[0], now_utc.split()[1], tz)
+
+    # השעה האמיתית לפי ישראל
+    now_local = datetime.now(timezone('Asia/Jerusalem')).strftime('%H:%M:%S')
 
     # יצירת רשימת כוכבים ידנית
     objects = [
@@ -67,7 +68,7 @@ def get_astrology_forecast():
         const.PLUTO: "♇ פלוטו",
     }
 
-    forecast = f"🔮 תחזית אסטרולוגית ל־{dt.time} (UTC{tz}):\n\n"
+    forecast = f"🔮 תחזית אסטרולוגית ל־{now_local} (שעון ישראל):\n\n"
     signs = {}
 
     for obj in objects:
