@@ -2,6 +2,7 @@ from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib import ephem
+from flatlib import const
 import swisseph as swe
 import json
 import datetime
@@ -14,7 +15,7 @@ birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
 # כוכבים רגילים + לילית (אבל בלי כירון עדיין)
-objects = ephem.MAJOR_OBJECTS + ['LILITH']
+objects = const.LIST_OBJECTS + ['LILITH']
 chart = Chart(birth_dt, birth_pos, IDs=objects)
 
 # תוצאה סופית
