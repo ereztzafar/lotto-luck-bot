@@ -77,14 +77,7 @@ def compare_transit_to_birth(transit_chart, birth_chart):
     ]
     
     # הגדרת זוויות עיקריות (מאחר ואין ב-flatlib משתנה קבוע כזה)
-    MAJOR_ASPECTS = [
-    aspects.CONJUNCTION,
-    aspects.SEXTILE,
-    aspects.SQUARE,
-    aspects.TRINE,
-    aspects.OPPOSITION
-]
-
+    MAJOR_ASPECTS = [0, 60, 90, 120, 180]  # אלו הזוויות של האספקטים המרכזיים
     
     results = []
     for t_obj in relevant:
