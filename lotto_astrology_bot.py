@@ -1,19 +1,53 @@
+from flatlib.datetime import Datetime
+from flatlib.geopos import GeoPos
+from flatlib.chart import Chart
+from flatlib import const
+import os
+import requests
+from datetime import datetime
+from pytz import timezone
+
+# פרטי לידה – פתח תקווה
+BIRTH_DATE = '1970/11/22'
+BIRTH_TIME = '06:00'
+BIRTH_PLACE = GeoPos('32n05', '34e53')
+
+# קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
+def get_timezone():
+    today = datetime.utcnow()
+    year = today.year
+    # מועדים משוערים – ניתן לעדכן לפי כללים רשמיים
+    summer_start = datetime(year, 3, 29)
+    winter_start = datetime(year, 10, 27)
+    return '+03:00' if summer_start <= today < winter_start else '+02:00'
+
+# טעינת משתני סביבה (GitHub Secrets)
+def load_secrets():
+    token = os.getenv("TELEGRAM_TOKEN")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    if not token or not chat_id:
+        raise Exception("❌ חסר TELEGRAM_TOKEN או TELEGRAM_CHAT_ID ב־Secrets")
+    return token, chat_id
+
+# שליחת הודעה בטלגרם
+def send_telegram_message(message: str):
+    token, chat_id = load_secrets()
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    data = {"chat_id": chat_id, "text": message}
+    response = requests.post(url, data=data)
+    print(f"📤 Status: {response.status_code}")
+
+# התחזית האסטרולוגית
 def get_astrology_forecast():
     tz = get_timezone()
-    now_utc = datetime.utcnow().strftime('%Y/%m/%d %H:%M')
-    dt = Datetime(now_utc.split()[0], now_utc.split()[1], tz)
-
-    now_local = datetime.now(timezone('Asia/Jerusalem')).strftime('%H:%M:%S')
+    now = datetime.utcnow()
+    local_now = datetime.now(timezone('Asia/Jerusalem')).strftime('%H:%M')
+    dt = Datetime(now.strftime('%Y/%m/%d'), now.strftime('%H:%M'), tz)
 
     objects = [
         const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
         const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
     ]
-
-    try:
-        chart = Chart(dt, BIRTH_PLACE, IDs=objects)
-    except Exception as e:
-        return f"❌ שגיאה ביצירת מפת לידה: {e}"
 
     names = {
         const.SUN: "☀️ שמש",
@@ -28,10 +62,15 @@ def get_astrology_forecast():
         const.PLUTO: "♇ פלוטו",
     }
 
-    forecast = f"🔮 תחזית אסטרולוגית ל־{now_local} (שעון ישראל):\n\n"
+    try:
+        chart = Chart(dt, BIRTH_PLACE, IDs=objects)
+    except Exception as e:
+        return f"❌ שגיאה ביצירת מפת לידה: {e}"
+
+    forecast = f"🔮 תחזית אסטרולוגית ל־{local_now} (שעון ישראל):\n\n"
     signs = {}
-    reasons = []
     score = 0
+    reasons = []
 
     for obj in objects:
         planet = chart.get(obj)
@@ -41,23 +80,22 @@ def get_astrology_forecast():
         forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′{retro}\n"
         signs[obj] = planet.sign
 
-        # ניקוד שלילי על נסיגה של כוכבים משמעותיים
         if planet.retro and obj in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
             score -= 1
-            reasons.append(f"{names[obj]} בנסיגה – משפיע לרעה על המזל הכללי (-1)")
+            reasons.append(f"{names[obj]} בנסיגה – עלול לעכב מזל והצלחה (-1)")
 
-    # ניקוד חיובי/שלילי לפי מיקום הכוכבים (לפי הקוד שלך)
+    # ניקוד חכם לפי מזלות
     if signs[const.JUPITER] in ['Taurus', 'Pisces', 'Cancer']:
         score += 2
         reasons.append(f"♃ צדק במזל {signs[const.JUPITER]} – מזל טוב להצלחה וכסף (+2)")
 
     if signs[const.VENUS] in ['Leo', 'Libra']:
         score += 1
-        reasons.append(f"♀ ונוס במזל {signs[const.VENUS]} – מגביר יצירתיות ומשיכה למזל (+1)")
+        reasons.append(f"♀ ונוס במזל {signs[const.VENUS]} – מגביר משיכה והרמוניה (+1)")
 
     if signs[const.MOON] in ['Scorpio', 'Capricorn']:
         score -= 1
-        reasons.append(f"🌙 ירח במזל {signs[const.MOON]} – עלול להכניס מתחים פנימיים (-1)")
+        reasons.append(f"🌙 ירח במזל {signs[const.MOON]} – מגביר מתחים פנימיים (-1)")
 
     if signs[const.SATURN] in ['Aquarius', 'Capricorn']:
         score -= 1
@@ -65,25 +103,25 @@ def get_astrology_forecast():
 
     if signs[const.SUN] == 'Sagittarius':
         score += 1
-        reasons.append("☀️ שמש במזל קשת – תומך באופטימיות והרפתקנות (+1)")
+        reasons.append("☀️ שמש בקשת – מגביר אופטימיות והרפתקנות (+1)")
 
     if signs[const.MERCURY] in ['Gemini', 'Virgo']:
         score += 1
-        reasons.append(f"☿ מרקורי במזל {signs[const.MERCURY]} – חדות שכלית והתמקדות נכונה (+1)")
+        reasons.append(f"☿ מרקורי במזל {signs[const.MERCURY]} – חדות שכלית ובחירה נכונה (+1)")
 
     if signs[const.URANUS] == 'Aries':
         score += 1
-        reasons.append("♅ אורנוס בטלה – מזל פתאומי והפתעות נעימות (+1)")
+        reasons.append("♅ אורנוס בטלה – הפתעות נעימות ויצירתיות (+1)")
 
     if signs[const.PLUTO] == 'Scorpio':
         score += 1
-        reasons.append("♇ פלוטו בעקרב – עומק אינטואיטיבי ואומץ לקחת סיכונים (+1)")
+        reasons.append("♇ פלוטו בעקרב – אומץ לקחת סיכונים אינטואיטיביים (+1)")
 
     if signs[const.NEPTUNE] == 'Pisces':
         score += 1
-        reasons.append("♆ נפטון בדגים – תחושת זרימה והרמוניה פנימית טובה להימורים (+1)")
+        reasons.append("♆ נפטון בדגים – תחושת הרמוניה וזרימה טובה להימורים (+1)")
 
-    # שלב הסיכום
+    # סיכום
     if score >= 4:
         level = "🟢 סיכוי גבוה לזכייה היום!"
     elif 1 <= score < 4:
@@ -93,5 +131,9 @@ def get_astrology_forecast():
 
     forecast += "\n\n📌 נימוקים לתחזית:\n" + '\n'.join(f"- {r}" for r in reasons)
     forecast += f"\n\n🎲 {level}"
-
     return forecast.strip()
+
+# הרצה ישירה
+if __name__ == "__main__":
+    message = get_astrology_forecast()
+    send_telegram_message(message)
