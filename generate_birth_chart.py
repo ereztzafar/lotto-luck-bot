@@ -13,18 +13,10 @@ timezone = '+02:00'
 birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
-# רשימת כוכבים ללא לילית וכירון
+# רק כוכבים ש־pyswisseph תומכת בהם
 objects = [
-    const.SUN,
-    const.MOON,
-    const.MERCURY,
-    const.VENUS,
-    const.MARS,
-    const.JUPITER,
-    const.SATURN,
-    const.URANUS,
-    const.NEPTUNE,
-    const.PLUTO
+    const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+    const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
 ]
 
 # יצירת מפת לידה
