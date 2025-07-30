@@ -77,13 +77,14 @@ def compare_transit_to_birth(transit_chart, birth_chart):
     results = []
     for t_obj in relevant:
         for b_obj in relevant:
-            angle = aspects.getAspect(transit_chart.get(t_obj), birth_chart.get(b_obj))
+            angle = aspects.getAspect(transit_chart.get(t_obj), birth_chart.get(b_obj), aspects.MAJOR_ASPECTS)
             if angle:
                 aspect_name = angle[0]
                 orb = angle[1]
                 if abs(orb) <= 3:
                     results.append(f"{t_obj} {aspect_name} ל־{b_obj} (אורב {orb:.1f}°)")
     return results
+
 
 # התחזית האסטרולוגית + שעות מזל
 def get_astrology_forecast():
