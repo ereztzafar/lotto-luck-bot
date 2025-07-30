@@ -81,10 +81,6 @@ def get_astrology_forecast():
         signs[obj] = planet.sign
 
         if hasattr(planet, 'retro') and planet.retro and obj in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
-        # כאן תכניס את מה שאמור לקרות בתוך התנאי
-        retro = 'R'
-        else:
-        retro = ''
             score -= 1
             reasons.append(f"{names[obj]} בנסיגה – עלול לעכב מזל והצלחה (-1)")
 
