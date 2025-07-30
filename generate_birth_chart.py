@@ -1,7 +1,7 @@
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib import ephem
+from flatlib import const
 import json
 import os
 import requests
@@ -13,8 +13,19 @@ timezone = '+02:00'
 birth_pos = GeoPos('32n05', '34e53')
 birth_dt = Datetime(birth_date, birth_time, timezone)
 
-# רק הכוכבים המרכזיים (ללא כירון ולילית)
-objects = ephem.MAJOR_OBJECTS
+# רשימת כוכבים ללא לילית וכירון
+objects = [
+    const.SUN,
+    const.MOON,
+    const.MERCURY,
+    const.VENUS,
+    const.MARS,
+    const.JUPITER,
+    const.SATURN,
+    const.URANUS,
+    const.NEPTUNE,
+    const.PLUTO
+]
 
 # יצירת מפת לידה
 chart = Chart(birth_dt, birth_pos, IDs=objects)
@@ -58,4 +69,4 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
     send_json_to_telegram(file_path, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
 else:
-    print("⚠️ לא הוגדרו משתני סביבה TELEGRAM_TOKEN ו־CHAT_ID")
+    print("⚠️ לא הוגדרו משתני סביבה TELEGRAM_TOKEN ו־TELEGRAM_CHAT_ID")
