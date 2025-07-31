@@ -1,7 +1,7 @@
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
-from flatlib import const, aspect
+from flatlib import const, aspects
 import os
 import requests
 from datetime import datetime
@@ -73,16 +73,17 @@ def get_forecast_for_hour(hour):
             score -= 1
             reasons.append(f"{obj} בנסיגה – השפעה מאטה (-1)")
 
-        if angle in MAJOR_ASPECTS:
-            if angle == aspects.CONJUNCTION:
-                score += 2
-                reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
-            elif angle in [aspects.TRINE, aspects.SEXTILE]:
-                score += 1
-                reasons.append(f"{obj} בזווית הרמונית ללידה – זרימה חיובית (+1)")
-            elif angle in [aspects.SQUARE, aspects.OPPOSITION]:
-                score -= 1
-                reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
+        if angle in aspects.MAJOR_ASPECTS:
+    if angle == 'CONJ':
+        score += 2
+        reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
+    elif angle in ['TRI', 'SEX']:
+        score += 1
+        reasons.append(f"{obj} בזווית הרמונית ללידה – זרימה חיובית (+1)")
+    elif angle in ['SQR', 'OPP']:
+        score -= 1
+        reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
+
 
     return (hour, score, reasons)
 
