@@ -15,8 +15,7 @@ def get_birth_chart(birth_date, birth_time, birth_place):
     objects = [
         const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
         const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
-        const.CHIRON
-    ]
+            ]
 
     chart = Chart(birth_dt, birth_place, IDs=objects)
     return chart
