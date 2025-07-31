@@ -1,7 +1,7 @@
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib.aspects import AspectChecker, MAJOR_ASPECTS
+from flatlib import aspects
 from flatlib import const
 from lotto_bot import send_telegram_message
 from datetime import datetime
