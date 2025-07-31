@@ -29,4 +29,4 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python lotto_astrology_bot.py
-          python daily_forecast.py
+         
