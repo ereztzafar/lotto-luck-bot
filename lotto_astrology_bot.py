@@ -92,11 +92,10 @@ def daily_luck_forecast():
             best_score = score
             best_hour = hour_val
 
-    if best_hour is None:
+   if best_hour is None:
     summary = "⚠️ לא נמצאה שעה מובהקת עם מזל גבוה במיוחד היום.\n"
 else:
     summary = f"🎯 השעה הטובה ביותר היום למילוי לוטו היא {best_hour:02d}:00 (ניקוד {best_score})\n"
-
 
     full_forecast = summary + '\n'.join(messages)
     return full_forecast.strip()
