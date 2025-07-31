@@ -7,15 +7,14 @@ import requests
 from datetime import datetime
 from pytz import timezone
 
-# הגדרה ידנית של זוויות אסטרולוגיות עיקריות (אם MAJOR_ASPECTS לא קיים)
+# הגדרה ידנית של זוויות אסטרולוגיות עיקריות
 MAJOR_ASPECTS = [
-    aspect.CONJUNCTION,
-    aspect.OPPOSITION,
-    aspect.SQUARE,
-    aspect.TRINE,
-    aspect.SEXTILE
+    aspects.CONJUNCTION,
+    aspects.OPPOSITION,
+    aspects.SQUARE,
+    aspects.TRINE,
+    aspects.SEXTILE
 ]
-
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
@@ -74,17 +73,15 @@ def get_forecast_for_hour(hour):
             reasons.append(f"{obj} בנסיגה – השפעה מאטה (-1)")
 
         if angle in aspects.MAJOR_ASPECTS:
-    if angle == 'CONJ':
-        score += 2
-        reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
-    elif angle in ['TRI', 'SEX']:
-        score += 1
-        reasons.append(f"{obj} בזווית הרמונית ללידה – זרימה חיובית (+1)")
-    elif angle in ['SQR', 'OPP']:
-        score -= 1
-        reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
-
-
+            if angle == 'CONJ':
+                score += 2
+                reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
+            elif angle in ['TRI', 'SEX']:
+                score += 1
+                reasons.append(f"{obj} בזווית הרמונית ללידה – זרימה חיובית (+1)")
+            elif angle in ['SQR', 'OPP']:
+                score -= 1
+                reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
 
     return (hour, score, reasons)
 
