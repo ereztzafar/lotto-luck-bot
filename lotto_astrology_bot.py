@@ -43,44 +43,44 @@ def analyze_hour(current_date, hour):
         birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
         transit_chart = create_chart(current_date, time_str)
 
-        for obj in PLANETS:
-            try:
-                natal = birth_chart.get(obj)
-                transit = transit_chart.get(obj)
+        # מחזור על כל צירוף בין כוכבי לידה לכוכבי טרנזיט
+        for natal_obj in PLANETS:
+            natal = birth_chart.get(natal_obj)
+            transit = transit_chart.get(natal_obj)
 
-                if not hasattr(natal, 'lon') or not hasattr(transit, 'lon'):
-                    reasons.append(f"שגיאה בניתוח {obj}: נתון אסטרולוגי שגוי")
-                    continue
+            if not natal or not transit:
+                reasons.append(f"שגיאה בטעינת {natal_obj}")
+                continue
 
-                angle = aspects.getAspect(natal.lon, transit.lon, MAJOR_ASPECTS)
+            # בדיקת זווית בין כוכב לידה לטרנזיט
+            angle = aspects.getAspect(natal.lon, transit.lon, aspects.MAJOR_ASPECTS)
 
-                if isinstance(angle, str) and angle in MAJOR_ASPECTS:
-                    if angle == 'CONJ':
-                        score += 2
-                        reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
-                    elif angle in ['TRI', 'SEX']:
-                        score += 1
-                        reasons.append(f"{obj} בזווית הרמונית – זרימה חיובית (+1)")
-                    elif angle in ['SQR', 'OPP']:
-                        score -= 1
-                        reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
-
-                if hasattr(transit, 'retro') and transit.retro and obj in [const.MERCURY, const.VENUS, const.MARS]:
+            if angle:
+                if angle == 'CONJ':
+                    score += 2
+                    reasons.append(f"{natal_obj} בצמידות ללידה – אנרגיה חזקה (+2)")
+                elif angle in ['TRI', 'SEX']:
+                    score += 1
+                    reasons.append(f"{natal_obj} בזווית הרמונית – זרימה חיובית (+1)")
+                elif angle in ['SQR', 'OPP']:
                     score -= 1
-                    reasons.append(f"{obj} בנסיגה – השפעה מאטה (-1)")
+                    reasons.append(f"{natal_obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
 
-            except Exception as inner_e:
-                reasons.append(f"שגיאה בניתוח {obj}: {inner_e}")
+            # נסיגה
+            if hasattr(transit, 'retro') and transit.retro and natal_obj in [const.MERCURY, const.VENUS, const.MARS]:
+                score -= 1
+                reasons.append(f"{natal_obj} בנסיגה – השפעה מאטה (-1)")
 
     except Exception as e:
         score = -999
-        reasons.append(f"שגיאה ביצירת מפות אסטרולוגיות: {e}")
+        reasons.append(f"שגיאה כללית בניתוח: {e}")
 
     return {
         'hour': f'{hour:02d}:00',
         'score': score,
         'reasons': reasons
     }
+
 
 # טעינת משתני סביבה (GitHub Secrets)
 def load_secrets():
