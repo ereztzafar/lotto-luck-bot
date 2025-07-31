@@ -47,10 +47,9 @@ def get_forecast_for_hour(hour):
         birth_chart = Chart(birth_dt, BIRTH_PLACE)
         transit_chart = Chart(dt, BIRTH_PLACE)
     except Exception as e:
-        return f"❌ שגיאה ביצירת מפות אסטרולוגיות: {e}"
+        return (hour, -999, [f"שגיאה ביצירת מפות אסטרולוגיות: {e}"])
 
     forecast = f"🕒 שעה {hour:02d}:00 – תחזית:"
-
     score = 0
     reasons = []
 
@@ -59,7 +58,7 @@ def get_forecast_for_hour(hour):
 
         natal = birth_chart.get(obj)
         transit = transit_chart.get(obj)
-        angle = aspects.getAspect(natal.lon, transit.lon)
+        angle = aspects.getAspect(natal.lon, transit.lon, aspects.MAJOR_ASPECTS)
 
         if hasattr(transit, 'retro') and transit.retro and obj in [const.MERCURY, const.VENUS, const.MARS]:
             score -= 1
