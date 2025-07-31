@@ -1,7 +1,8 @@
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib import aspects, const
+from flatlib.aspects.aspect import getAngle, aspectType, MAJOR_ASPECTS
+from flatlib import const
 from lotto_bot import send_telegram_message
 from datetime import datetime
 
@@ -11,11 +12,11 @@ BIRTH_TIME = '06:00'
 TIMEZONE = '+02:00'
 BIRTH_PLACE = GeoPos('32n05', '34e53')
 
-# שימוש בקבועים מתוך const במקום ephem.MAJOR_OBJECTS
+# שימוש בקבועים מתוך const
 OBJECTS = [
     const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
-    const.CHIRON  # הוספת כירון
+    const.CHIRON
 ]
 
 def start_forecast():
@@ -32,10 +33,10 @@ def start_forecast():
         for j in range(i + 1, len(OBJECTS)):
             obj1 = chart.get(OBJECTS[i])
             obj2 = chart.get(OBJECTS[j])
-            angle = aspects.angle(obj1, obj2)
-            aspect_type = aspects.aspectType(obj1, obj2, aspects.MAJOR_ASPECTS)
-            if aspect_type:
-                line = f"🔹 {obj1.id} ({obj1.sign}) ⬄ {obj2.id} ({obj2.sign}) - היבט: {aspect_type} ({round(angle)}°)"
+            angle = getAngle(obj1, obj2)
+            a_type = aspectType(obj1, obj2, MAJOR_ASPECTS)
+            if a_type:
+                line = f"🔹 {obj1.id} ({obj1.sign}) ⬄ {obj2.id} ({obj2.sign}) - היבט: {a_type} ({round(angle)}°)"
                 aspect_lines.append(line)
 
     message = header + "\n".join(aspect_lines)
