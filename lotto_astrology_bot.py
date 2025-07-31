@@ -8,6 +8,7 @@ import os
 import requests
 from datetime import datetime, timedelta
 from pytz import timezone
+import subprocess
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
@@ -184,3 +185,9 @@ def get_astrology_forecast():
 if __name__ == "__main__":
     message = get_astrology_forecast()
     send_telegram_message(message)
+# הרצת daily_forecast.py אחרי שליחת התחזית הראשית
+try:
+    print("📤 מריץ daily_forecast.py...")
+    subprocess.run(["python", "daily_forecast.py"], check=True)
+except Exception as e:
+    print(f"❌ שגיאה בהרצת daily_forecast.py: {e}")
