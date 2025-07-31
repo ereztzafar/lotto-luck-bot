@@ -39,7 +39,7 @@ def start_forecast():
             continue
 
         angle = abs(transit.lon - natal.lon) % 360
-        aspect_type = aspects.getAspectType(angle)
+        aspect_type = aspects.aspectType(angle)
 
         if aspect_type in [aspects.CONJUNCTION, aspects.TRINE, aspects.SEXTILE]:
             insights.append(f"✨ {obj.id} בזווית חיובית ({aspect_type}) - פוטנציאל חיובי.")
