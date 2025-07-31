@@ -36,8 +36,15 @@ def send_telegram_message(message: str):
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
+
     response = requests.post(url, data=data)
     print(f"📤 Status: {response.status_code}")
+    
+    if response.status_code != 200:
+        print(f"❌ Telegram error: {response.text}")
+    else:
+        print("✅ הודעה נשלחה בטלגרם בהצלחה.")
+
 
 # קבלת תחזית אסטרולוגית לשעה מסוימת
 def get_forecast_for_hour(hour):
