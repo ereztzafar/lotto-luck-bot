@@ -15,23 +15,13 @@ BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 BIRTH_PLACE = GeoPos('32n05', '34e53')
 
-# טבלת שליטים קלאסיים של המזלות
 RULERS = {
-    'Aries': const.MARS,
-    'Taurus': const.VENUS,
-    'Gemini': const.MERCURY,
-    'Cancer': const.MOON,
-    'Leo': const.SUN,
-    'Virgo': const.MERCURY,
-    'Libra': const.VENUS,
-    'Scorpio': const.MARS,
-    'Sagittarius': const.JUPITER,
-    'Capricorn': const.SATURN,
-    'Aquarius': const.SATURN,
-    'Pisces': const.JUPITER,
+    'Aries': const.MARS, 'Taurus': const.VENUS, 'Gemini': const.MERCURY,
+    'Cancer': const.MOON, 'Leo': const.SUN, 'Virgo': const.MERCURY,
+    'Libra': const.VENUS, 'Scorpio': const.MARS, 'Sagittarius': const.JUPITER,
+    'Capricorn': const.SATURN, 'Aquarius': const.SATURN, 'Pisces': const.JUPITER,
 }
 
-# קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
 def get_timezone():
     today = datetime.utcnow()
     year = today.year
@@ -39,7 +29,6 @@ def get_timezone():
     winter_start = datetime(year, 10, 27)
     return '+03:00' if summer_start <= today < winter_start else '+02:00'
 
-# משתני סביבה (GitHub Actions)
 def load_secrets():
     token = os.getenv("TELEGRAM_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
@@ -47,7 +36,6 @@ def load_secrets():
         raise Exception("❌ חסר TELEGRAM_TOKEN או TELEGRAM_CHAT_ID")
     return token, chat_id
 
-# שליחת הודעה בטלגרם
 def send_telegram_message(message: str):
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
@@ -55,43 +43,35 @@ def send_telegram_message(message: str):
     response = requests.post(url, data=data)
     print(f"📤 Status: {response.status_code}")
 
-# חישוב שעות מזל אישיות
 def get_lucky_hours(date_str, tz):
     lucky_planets = [const.JUPITER, const.VENUS, const.SUN]
     result = []
     base_time = datetime.strptime(date_str + " 05:00", '%Y/%m/%d %H:%M')
-    for i in range(0, 18):  # מ-05:00 עד 22:00
+    for i in range(0, 18):
         dt = base_time + timedelta(hours=i)
         flat_dt = Datetime(dt.strftime('%Y/%m/%d'), dt.strftime('%H:%M'), tz)
         chart = Chart(flat_dt, BIRTH_PLACE)
         asc = chart.get(const.ASC)
         asc_sign = asc.sign
-        ruler_id = RULERS.get(asc_sign)  # ← שליט האופק מתוך טבלת RULERS
+        ruler_id = RULERS.get(asc_sign)
         if ruler_id in lucky_planets:
             result.append(dt.strftime('%H:%M'))
     return result
 
-# השוואת מפת טרנזיט למפת לידה
 def compare_transit_to_birth(transit_chart, birth_chart):
     relevant = [
         const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
         const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
     ]
-    
-    MAJOR_ASPECTS = [0, 60, 90, 120, 180]  # זוויות עיקריות
-    
+    MAJOR_ASPECTS = [0, 60, 90, 120, 180]
     results = []
     for t_obj in relevant:
         for b_obj in relevant:
             angle = aspects.getAspect(transit_chart.get(t_obj), birth_chart.get(b_obj), MAJOR_ASPECTS)
-            if angle:
-                aspect_name = angle.type
-                orb = angle.orb
-                if abs(orb) <= 3:
-                    results.append(f"{t_obj} {aspect_name} ל־{b_obj} (אורב {orb:.1f}°)")
+            if angle and abs(angle.orb) <= 3:
+                results.append(f"{t_obj} {angle.type} ל־{b_obj} (אורב {angle.orb:.1f}°)")
     return results
 
-# התחזית האסטרולוגית + שעות מזל
 def get_astrology_forecast():
     tz = get_timezone()
     now = datetime.utcnow()
@@ -107,7 +87,8 @@ def get_astrology_forecast():
     names = {
         const.SUN: "☀️ שמש", const.MOON: "🌙 ירח", const.MERCURY: "☿ מרקורי",
         const.VENUS: "♀ ונוס", const.MARS: "♂ מארס", const.JUPITER: "♃ צדק",
-        const.SATURN: "♄ שבתאי", const.URANUS: "♅ אורנוס", const.NEPTUNE: "♆ נפטון", const.PLUTO: "♇ פלוטו",
+        const.SATURN: "♄ שבתאי", const.URANUS: "♅ אורנוס",
+        const.NEPTUNE: "♆ נפטון", const.PLUTO: "♇ פלוטו",
     }
 
     try:
@@ -118,9 +99,7 @@ def get_astrology_forecast():
         return f"❌ שגיאה ביצירת מפות: {e}"
 
     forecast = f"🔭 תחזית ל־{local_now} (שעון ישראל):\n\n"
-    signs = {}
-    score = 0
-    reasons = []
+    signs, score, reasons = {}, 0, []
 
     for obj in objects:
         planet = transit_chart.get(obj)
@@ -162,12 +141,11 @@ def get_astrology_forecast():
         score += 1
         reasons.append("♆ נפטון בדגים – תחושת הרמוניה וזרימה טובה להימורים (+1)")
 
-    if score >= 4:
-        level = "🟢 סיכוי גבוה לזכייה היום!"
-    elif 1 <= score < 4:
-        level = "🟡 סיכוי בינוני – שווה לנסות חישגד או צ'אנס."
-    else:
-        level = "🔴 לא מומלץ היום – שמור את הכסף למחר."
+    level = (
+        "🟢 סיכוי גבוה לזכייה היום!" if score >= 4 else
+        "🟡 סיכוי בינוני – שווה לנסות חישגד או צ'אנס." if score >= 1 else
+        "🔴 לא מומלץ היום – שמור את הכסף למחר."
+    )
 
     lucky_hours = get_lucky_hours(today_str, tz)
     hours_str = ', '.join(lucky_hours) if lucky_hours else "אין שעות מזל היום."
@@ -181,13 +159,14 @@ def get_astrology_forecast():
 
     return forecast.strip()
 
-# הרצה
+# הרצה ראשית
 if __name__ == "__main__":
     message = get_astrology_forecast()
     send_telegram_message(message)
-# הרצת daily_forecast.py אחרי שליחת התחזית הראשית
-try:
-    print("📤 מריץ daily_forecast.py...")
-    subprocess.run(["python3", "daily_forecast.py"], check=True)
-except Exception as e:
-    print(f"❌ שגיאה בהרצת daily_forecast.py: {e}")
+
+    # נסיון להריץ גם את daily_forecast.py – ללא עצירה במקרה של שגיאה
+    try:
+        print("📤 מריץ daily_forecast.py...")
+        subprocess.run(["python3", "daily_forecast.py"], check=True)
+    except Exception as e:
+        send_telegram_message(f"⚠️ שגיאה בהרצת daily_forecast.py:\n{e}")
