@@ -94,9 +94,14 @@ def load_secrets():
 def send_telegram_message(message: str):
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
-    data = {"chat_id": chat_id, "text": message}
+    data = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": "HTML"  # 👈 הוספת תמיכה ב־HTML
+    }
     response = requests.post(url, data=data)
     print(f"📤 Status: {response.status_code}")
+
 
 def daily_forecast():
     tz = pytz.timezone(TIMEZONE)
