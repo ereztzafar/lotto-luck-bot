@@ -84,6 +84,7 @@ def get_astrology_forecast():
         score -= 1
         reasons.append(f"{names[obj]} בנסיגה – עלול לעכב מזל והצלחה (-1)")
 
+
     # ניקוד חכם לפי מזלות
     if signs[const.JUPITER] in ['Taurus', 'Pisces', 'Cancer']:
         score += 2
