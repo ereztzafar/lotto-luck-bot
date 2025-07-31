@@ -32,7 +32,7 @@ def start_forecast():
         for j in range(i + 1, len(OBJECTS)):
             obj1 = chart.get(OBJECTS[i])
             obj2 = chart.get(OBJECTS[j])
-            angle = aspects.angle(obj1, obj2)
+            angle = aspects.getAngle(obj1, obj2)  # תיקון כאן!
             aspect_type = aspects.aspectType(obj1, obj2, aspects.MAJOR_ASPECTS)
             if aspect_type:
                 line = f"🔹 {obj1.id} ({obj1.sign}) ⬄ {obj2.id} ({obj2.sign}) - היבט: {aspect_type} ({round(angle)}°)"
