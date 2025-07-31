@@ -5,9 +5,8 @@ from flatlib import const, aspects
 import os
 import requests
 from datetime import datetime
-from pytz import timezone
 
-# הגדרה ידנית של זוויות אסטרולוגיות עיקריות (כמחרוזות רגילות)
+# הגדרה ידנית של זוויות אסטרולוגיות עיקריות
 MAJOR_ASPECTS = ['CONJ', 'OPP', 'SQR', 'TRI', 'SEX']
 
 # פרטי לידה – פתח תקווה
@@ -15,7 +14,7 @@ BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 BIRTH_PLACE = GeoPos('32n05', '34e53')
 
-# קביעת אזור זמן לפי תאריך (שעון חורף/קיץ)
+# קביעת אזור זמן (לפי שעון קיץ/חורף ישראלי)
 def get_timezone():
     today = datetime.utcnow()
     year = today.year
@@ -23,7 +22,7 @@ def get_timezone():
     winter_start = datetime(year, 10, 27)
     return '+03:00' if summer_start <= today < winter_start else '+02:00'
 
-# טעינת משתני סביבה (GitHub Secrets)
+# טעינת משתני סביבה
 def load_secrets():
     token = os.getenv("TELEGRAM_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
@@ -33,20 +32,21 @@ def load_secrets():
 
 # שליחת הודעה בטלגרם
 def send_telegram_message(message: str):
+    if not message or not message.strip():
+        print("⚠️ לא נשלחה הודעה — הטקסט ריק.")
+        return
+
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {"chat_id": chat_id, "text": message}
-
     response = requests.post(url, data=data)
     print(f"📤 Status: {response.status_code}")
-    
     if response.status_code != 200:
         print(f"❌ Telegram error: {response.text}")
     else:
         print("✅ הודעה נשלחה בטלגרם בהצלחה.")
 
-
-# קבלת תחזית אסטרולוגית לשעה מסוימת
+# קבלת תחזית לשעה מסוימת
 def get_forecast_for_hour(hour):
     base_date = datetime.utcnow().strftime('%Y/%m/%d')
     tz = get_timezone()
@@ -79,27 +79,30 @@ def get_forecast_for_hour(hour):
                 reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
             elif angle in ['TRI', 'SEX']:
                 score += 1
-                reasons.append(f"{obj} בזווית הרמונית ללידה – זרימה חיובית (+1)")
+                reasons.append(f"{obj} בזווית הרמונית – זרימה חיובית (+1)")
             elif angle in ['SQR', 'OPP']:
                 score -= 1
                 reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
 
     return (hour, score, reasons)
 
-# חישוב כל התחזיות לשעות היום
+# יצירת הודעה יומית לכל השעות
 def daily_luck_forecast():
     best_hour = None
     best_score = -999
     messages = []
 
-    for hour in range(5, 23, 3):
+    for hour in range(5, 23, 3):  # מ-05:00 עד 20:00 כל 3 שעות
         hour_val, score, reasons = get_forecast_for_hour(hour)
         messages.append(f"\n🕒 {hour_val:02d}:00 – ניקוד: {score}\n" + '\n'.join(f"- {r}" for r in reasons))
         if score > best_score:
             best_score = score
             best_hour = hour_val
 
-   # הרצה ישירה
+    summary = f"\n🎯 שעת המזל הטובה ביותר היום: {best_hour:02d}:00 (ניקוד: {best_score})"
+    return "🔮 תחזית אסטרולוגית יומית למילוי לוטו:\n" + '\n'.join(messages) + summary
+
+# הרצה ישירה
 if __name__ == "__main__":
     message = daily_luck_forecast()
     send_telegram_message(message)
