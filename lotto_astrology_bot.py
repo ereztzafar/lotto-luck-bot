@@ -2,7 +2,6 @@ from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib import const, aspects
-from flatlib import objects
 import os
 import requests
 from datetime import datetime
