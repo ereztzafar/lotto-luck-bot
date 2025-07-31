@@ -72,7 +72,7 @@ def get_astrology_forecast():
     score = 0
     reasons = []
 
-    for obj in objects:
+   for obj in objects:
     planet = chart.get(obj)
     deg = int(planet.lon)
     min = int((planet.lon - deg) * 60)
@@ -83,6 +83,7 @@ def get_astrology_forecast():
     if hasattr(planet, 'retro') and planet.retro and obj in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
         score -= 1
         reasons.append(f"{names[obj]} בנסיגה – עלול לעכב מזל והצלחה (-1)")
+
 
 
     # ניקוד חכם לפי מזלות
