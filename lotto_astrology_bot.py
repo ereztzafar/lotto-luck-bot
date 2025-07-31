@@ -1,10 +1,10 @@
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
-from flatlib import const
+from flatlib import const, aspects
 import os
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 
 # פרטי לידה – פתח תקווה
@@ -16,7 +16,6 @@ BIRTH_PLACE = GeoPos('32n05', '34e53')
 def get_timezone():
     today = datetime.utcnow()
     year = today.year
-    # מועדים משוערים – ניתן לעדכן לפי כללים רשמיים
     summer_start = datetime(year, 3, 29)
     winter_start = datetime(year, 10, 27)
     return '+03:00' if summer_start <= today < winter_start else '+02:00'
@@ -37,105 +36,66 @@ def send_telegram_message(message: str):
     response = requests.post(url, data=data)
     print(f"📤 Status: {response.status_code}")
 
-# התחזית האסטרולוגית
-def get_astrology_forecast():
+# קבלת תחזית אסטרולוגית לשעה מסוימת
+def get_forecast_for_hour(hour):
+    base_date = datetime.utcnow().strftime('%Y/%m/%d')
     tz = get_timezone()
-    now = datetime.utcnow()
-    local_now = datetime.now(timezone('Asia/Jerusalem')).strftime('%H:%M')
-    dt = Datetime(now.strftime('%Y/%m/%d'), now.strftime('%H:%M'), tz)
-
-    objects = [
-        const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
-        const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
-    ]
-
-    names = {
-        const.SUN: "☀️ שמש",
-        const.MOON: "🌙 ירח",
-        const.MERCURY: "☿ מרקורי",
-        const.VENUS: "♀ ונוס",
-        const.MARS: "♂ מארס",
-        const.JUPITER: "♃ צדק",
-        const.SATURN: "♄ שבתאי",
-        const.URANUS: "♅ אורנוס",
-        const.NEPTUNE: "♆ נפטון",
-        const.PLUTO: "♇ פלוטו",
-    }
+    dt = Datetime(base_date, f"{hour:02d}:00", tz)
 
     try:
-        chart = Chart(dt, BIRTH_PLACE, IDs=objects)
+        birth_dt = Datetime(BIRTH_DATE, BIRTH_TIME, tz)
+        birth_chart = Chart(birth_dt, BIRTH_PLACE)
+        transit_chart = Chart(dt, BIRTH_PLACE)
     except Exception as e:
-        return f"❌ שגיאה ביצירת מפת לידה: {e}"
+        return f"❌ שגיאה ביצירת מפות אסטרולוגיות: {e}"
 
-    forecast = f"🔮 תחזית אסטרולוגית ל־{local_now} (שעון ישראל):\n\n"
-    signs = {}
+    forecast = f"🕒 שעה {hour:02d}:00 – תחזית:
+"
     score = 0
     reasons = []
 
-   for obj in objects:
-    planet = chart.get(obj)
-    deg = int(planet.lon)
-    min = int((planet.lon - deg) * 60)
-    retro = " ℞" if hasattr(planet, 'retro') and planet.retro else ""
-    forecast += f"{names[obj]} במזל {planet.sign} {deg}°{min:02d}′{retro}\n"
-    signs[obj] = planet.sign
+    for obj in [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+                const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO]:
 
-    if hasattr(planet, 'retro') and planet.retro and obj in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]:
-        score -= 1
-        reasons.append(f"{names[obj]} בנסיגה – עלול לעכב מזל והצלחה (-1)")
+        natal = birth_chart.get(obj)
+        transit = transit_chart.get(obj)
+        angle = aspects.getAspect(natal.lon, transit.lon)
 
+        if hasattr(transit, 'retro') and transit.retro and obj in [const.MERCURY, const.VENUS, const.MARS]:
+            score -= 1
+            reasons.append(f"{obj} בנסיגה – השפעה מאטה (-1)")
 
+        if angle in aspects.MAJOR_ASPECTS:
+            if angle == aspects.CONJUNCTION:
+                score += 2
+                reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
+            elif angle in [aspects.TRINE, aspects.SEXTILE]:
+                score += 1
+                reasons.append(f"{obj} בזווית הרמונית ללידה – זרימה חיובית (+1)")
+            elif angle in [aspects.SQUARE, aspects.OPPOSITION]:
+                score -= 1
+                reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
 
-    # ניקוד חכם לפי מזלות
-    if signs[const.JUPITER] in ['Taurus', 'Pisces', 'Cancer']:
-        score += 2
-        reasons.append(f"♃ צדק במזל {signs[const.JUPITER]} – מזל טוב להצלחה וכסף (+2)")
+    return (hour, score, reasons)
 
-    if signs[const.VENUS] in ['Leo', 'Libra']:
-        score += 1
-        reasons.append(f"♀ ונוס במזל {signs[const.VENUS]} – מגביר משיכה והרמוניה (+1)")
+# חישוב כל התחזיות לשעות היום
+def daily_luck_forecast():
+    best_hour = None
+    best_score = -999
+    messages = []
 
-    if signs[const.MOON] in ['Scorpio', 'Capricorn']:
-        score -= 1
-        reasons.append(f"🌙 ירח במזל {signs[const.MOON]} – מגביר מתחים פנימיים (-1)")
+    for hour in range(5, 23, 3):
+        hour_val, score, reasons = get_forecast_for_hour(hour)
+        messages.append(f"\n🕒 {hour_val:02d}:00 – ניקוד: {score}\n" + '\n'.join(f"- {r}" for r in reasons))
+        if score > best_score:
+            best_score = score
+            best_hour = hour_val
 
-    if signs[const.SATURN] in ['Aquarius', 'Capricorn']:
-        score -= 1
-        reasons.append(f"♄ שבתאי במזל {signs[const.SATURN]} – מגביל ומכביד על מזל אישי (-1)")
-
-    if signs[const.SUN] == 'Sagittarius':
-        score += 1
-        reasons.append("☀️ שמש בקשת – מגביר אופטימיות והרפתקנות (+1)")
-
-    if signs[const.MERCURY] in ['Gemini', 'Virgo']:
-        score += 1
-        reasons.append(f"☿ מרקורי במזל {signs[const.MERCURY]} – חדות שכלית ובחירה נכונה (+1)")
-
-    if signs[const.URANUS] == 'Aries':
-        score += 1
-        reasons.append("♅ אורנוס בטלה – הפתעות נעימות ויצירתיות (+1)")
-
-    if signs[const.PLUTO] == 'Scorpio':
-        score += 1
-        reasons.append("♇ פלוטו בעקרב – אומץ לקחת סיכונים אינטואיטיביים (+1)")
-
-    if signs[const.NEPTUNE] == 'Pisces':
-        score += 1
-        reasons.append("♆ נפטון בדגים – תחושת הרמוניה וזרימה טובה להימורים (+1)")
-
-    # סיכום
-    if score >= 4:
-        level = "🟢 סיכוי גבוה לזכייה היום!"
-    elif 1 <= score < 4:
-        level = "🟡 סיכוי בינוני – שווה לנסות חישגד או צ'אנס."
-    else:
-        level = "🔴 לא מומלץ היום – שמור את הכסף למחר."
-
-    forecast += "\n\n📌 נימוקים לתחזית:\n" + '\n'.join(f"- {r}" for r in reasons)
-    forecast += f"\n\n🎲 {level}"
-    return forecast.strip()
+    summary = f"🎯 השעה הטובה ביותר היום למילוי לוטו היא {best_hour:02d}:00 (ניקוד {best_score})\n"
+    full_forecast = summary + '\n'.join(messages)
+    return full_forecast.strip()
 
 # הרצה ישירה
 if __name__ == "__main__":
-    message = get_astrology_forecast()
+    message = daily_luck_forecast()
     send_telegram_message(message)
