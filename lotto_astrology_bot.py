@@ -51,6 +51,11 @@ def analyze_hour(current_date, hour):
             natal = birth_chart.get(natal_obj)
             transit = transit_chart.get(natal_obj)
 
+        if not hasattr(natal, 'lon') or not hasattr(transit, 'lon'):
+        reasons.append(f"שגיאה: {natal_obj} לא נטען כראוי (לא אובייקט כוכב)")
+        continue
+
+
             if not natal or not transit:
                 reasons.append(f"שגיאה בטעינת {natal_obj}")
                 continue
