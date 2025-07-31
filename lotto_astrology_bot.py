@@ -92,12 +92,20 @@ def daily_luck_forecast():
     best_score = -999
     messages = []
 
-    for hour in range(5, 23, 3):  # מ-05:00 עד 20:00 כל 3 שעות
+    for hour in range(5, 23, 3):
         hour_val, score, reasons = get_forecast_for_hour(hour)
         messages.append(f"\n🕒 {hour_val:02d}:00 – ניקוד: {score}\n" + '\n'.join(f"- {r}" for r in reasons))
         if score > best_score:
             best_score = score
             best_hour = hour_val
+
+    if best_hour is not None:
+        summary = f"\n🎯 שעת המזל הטובה ביותר היום: {best_hour:02d}:00 (ניקוד: {best_score})"
+    else:
+        summary = "\n⚠️ לא נמצאה שעת מזל מתאימה היום."
+
+    return "🔮 תחזית אסטרולוגית יומית למילוי לוטו:\n" + '\n'.join(messages) + summary
+
 
 # הרצה ישירה
 if __name__ == "__main__":
