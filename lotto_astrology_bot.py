@@ -17,7 +17,7 @@ PLANETS = [
     const.VENUS, const.MARS, const.JUPITER, const.SATURN
 ]
 
-MAJOR_ASPECTS = [aspects.CONJ, aspects.OPP, aspects.SQR, aspects.TRI, aspects.SEX]
+MAJOR_ASPECTS = ['CONJ', 'OPP', 'SQR', 'TRI', 'SEX']
 
 def create_chart(date, time):
     return Chart(Datetime(date, time, '+02:00'), BIRTH_PLACE)
