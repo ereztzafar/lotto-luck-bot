@@ -1,6 +1,6 @@
 from birth_chart import get_birth_chart
 from lotto_bot import send_telegram_message
-from swisseph import GeoPos
+from flatlib.geopos import GeoPos
 from datetime import datetime
 
 # פרטי הלידה שלך
