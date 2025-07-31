@@ -52,7 +52,7 @@ def analyze_hour(current_date, hour):
                     reasons.append(f"שגיאה בניתוח {obj}: נתון אסטרולוגי שגוי")
                     continue
 
-                angle = aspects.getAspect(natal.lon, transit.lon)
+                angle = aspects.getAspect(natal.lon, transit.lon, MAJOR_ASPECTS)
 
                 if isinstance(angle, str) and angle in MAJOR_ASPECTS:
                     if angle == 'CONJ':
