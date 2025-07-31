@@ -3,9 +3,9 @@ from lotto_bot import send_telegram_message
 from datetime import datetime
 
 # פרטי הלידה שלך (קבועים)
-birth_date = "1970-11-22"
-birth_time = "06:00"
-birth_location = "Petah Tikva, Israel"
+BIRTH_DATE = '1970/11/22'
+BIRTH_TIME = '06:00'
+BIRTH_PLACE = GeoPos('32n05', '34e53')
 
 def start_forecast():
     now = datetime.now()
