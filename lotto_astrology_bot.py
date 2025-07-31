@@ -7,14 +7,8 @@ import requests
 from datetime import datetime
 from pytz import timezone
 
-# הגדרה ידנית של זוויות אסטרולוגיות עיקריות
-MAJOR_ASPECTS = [
-    aspects.CONJ,
-    aspects.OPP,
-    aspects.SQR,
-    aspects.TRI,
-    aspects.SEX
-]
+# הגדרה ידנית של זוויות אסטרולוגיות עיקריות (כמחרוזות רגילות)
+MAJOR_ASPECTS = ['CONJ', 'OPP', 'SQR', 'TRI', 'SEX']
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
@@ -72,7 +66,7 @@ def get_forecast_for_hour(hour):
             score -= 1
             reasons.append(f"{obj} בנסיגה – השפעה מאטה (-1)")
 
-        if angle in aspects.MAJOR_ASPECTS:
+        if angle:
             if angle == 'CONJ':
                 score += 2
                 reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
