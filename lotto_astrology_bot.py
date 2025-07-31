@@ -164,9 +164,4 @@ if __name__ == "__main__":
     message = get_astrology_forecast()
     send_telegram_message(message)
 
-    # נסיון להריץ גם את daily_forecast.py – ללא עצירה במקרה של שגיאה
-    try:
-        print("📤 מריץ daily_forecast.py...")
-        subprocess.run(["python3", "daily_forecast.py"], check=True)
-    except Exception as e:
-        send_telegram_message(f"⚠️ שגיאה בהרצת daily_forecast.py:\n{e}")
+    
