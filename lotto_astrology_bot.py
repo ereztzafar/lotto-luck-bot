@@ -9,6 +9,13 @@ from datetime import datetime
 # הגדרה ידנית של זוויות אסטרולוגיות עיקריות
 MAJOR_ASPECTS = ['CONJ', 'OPP', 'SQR', 'TRI', 'SEX']
 
+# רשימת כוכבים למעקב
+OBJECTS = [
+    const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+    const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
+    const.ASC, const.MC
+]
+
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
@@ -54,22 +61,22 @@ def get_forecast_for_hour(hour):
 
     try:
         birth_dt = Datetime(BIRTH_DATE, BIRTH_TIME, tz)
-        birth_chart = Chart(birth_dt, BIRTH_PLACE, IDs=const.LIST_OBJECTS)
-        transit_chart = Chart(dt, BIRTH_PLACE, IDs=const.LIST_OBJECTS)
-
-
-
+        birth_chart = Chart(birth_dt, BIRTH_PLACE, IDs=OBJECTS)
+        transit_chart = Chart(dt, BIRTH_PLACE, IDs=OBJECTS)
     except Exception as e:
         return (hour, -999, [f"שגיאה ביצירת מפות אסטרולוגיות: {e}"])
 
     score = 0
     reasons = []
 
-    for obj in [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
-                const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO]:
-
+    for obj in OBJECTS:
         natal = birth_chart.get(obj)
         transit = transit_chart.get(obj)
+
+        if not natal or not transit:
+            reasons.append(f"{obj} לא נמצא במפה – מדלגים")
+            continue
+
         angle = aspects.getAspect(natal.lon, transit.lon, MAJOR_ASPECTS)
 
         if hasattr(transit, 'retro') and transit.retro and obj in [const.MERCURY, const.VENUS, const.MARS]:
@@ -108,7 +115,6 @@ def daily_luck_forecast():
         summary = "\n⚠️ לא נמצאה שעת מזל מתאימה היום."
 
     return "🔮 תחזית אסטרולוגית יומית למילוי לוטו:\n" + '\n'.join(messages) + summary
-
 
 # הרצה ישירה
 if __name__ == "__main__":
