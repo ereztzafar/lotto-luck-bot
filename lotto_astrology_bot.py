@@ -60,9 +60,13 @@ def get_forecast_for_hour(hour):
     dt = Datetime(base_date, f"{hour:02d}:00", tz)
 
     try:
+        print(f"🔍 יצירת מפת לידה לשעה {hour:02d}:00 באזור זמן {tz}")
         birth_dt = Datetime(BIRTH_DATE, BIRTH_TIME, tz)
-        birth_chart = Chart(birth_dt, BIRTH_PLACE, IDs=OBJECTS)
-        transit_chart = Chart(dt, BIRTH_PLACE, IDs=OBJECTS)
+        birth_chart = Chart(birth_dt, BIRTH_PLACE, IDs=const.LIST_OBJECTS)
+
+        print(f"🔍 יצירת מפת טרנזיט לשעה {hour:02d}:00")
+        transit_chart = Chart(dt, BIRTH_PLACE, IDs=const.LIST_OBJECTS)
+
     except Exception as e:
         return (hour, -999, [f"שגיאה ביצירת מפות אסטרולוגיות: {e}"])
 
