@@ -97,6 +97,7 @@ def daily_luck_forecast():
 else:
     summary = f"🎯 השעה הטובה ביותר היום למילוי לוטו היא {best_hour:02d}:00 (ניקוד {best_score})\n"
 
+
     full_forecast = summary + '\n'.join(messages)
     return full_forecast.strip()
 
