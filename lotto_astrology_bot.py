@@ -6,7 +6,7 @@ from datetime import datetime as dt
 import pytz
 
 # הגדרות
-BIRTH_DATE = '1970-11-22'
+BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 BIRTH_PLACE = GeoPos('32n05', '34e53')  # פתח תקווה
 TIMEZONE = 'Asia/Jerusalem'
