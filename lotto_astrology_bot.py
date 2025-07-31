@@ -4,8 +4,17 @@ from flatlib.chart import Chart
 from flatlib import const, aspects
 import os
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime
 from pytz import timezone
+
+# הגדרה ידנית של זוויות אסטרולוגיות עיקריות (אם MAJOR_ASPECTS לא קיים)
+MAJOR_ASPECTS = [
+    aspects.CONJUNCTION,
+    aspects.OPPOSITION,
+    aspects.SQUARE,
+    aspects.TRINE,
+    aspects.SEXTILE
+]
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
@@ -49,7 +58,6 @@ def get_forecast_for_hour(hour):
     except Exception as e:
         return (hour, -999, [f"שגיאה ביצירת מפות אסטרולוגיות: {e}"])
 
-    forecast = f"🕒 שעה {hour:02d}:00 – תחזית:"
     score = 0
     reasons = []
 
@@ -58,13 +66,13 @@ def get_forecast_for_hour(hour):
 
         natal = birth_chart.get(obj)
         transit = transit_chart.get(obj)
-        angle = aspects.getAspect(natal.lon, transit.lon, aspects.MAJOR_ASPECTS)
+        angle = aspects.getAspect(natal.lon, transit.lon, MAJOR_ASPECTS)
 
         if hasattr(transit, 'retro') and transit.retro and obj in [const.MERCURY, const.VENUS, const.MARS]:
             score -= 1
             reasons.append(f"{obj} בנסיגה – השפעה מאטה (-1)")
 
-        if angle in aspects.MAJOR_ASPECTS:
+        if angle in MAJOR_ASPECTS:
             if angle == aspects.CONJUNCTION:
                 score += 2
                 reasons.append(f"{obj} בצמידות ללידה – אנרגיה חזקה (+2)")
