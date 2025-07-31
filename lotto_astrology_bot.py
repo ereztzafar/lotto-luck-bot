@@ -9,11 +9,11 @@ from pytz import timezone
 
 # הגדרה ידנית של זוויות אסטרולוגיות עיקריות
 MAJOR_ASPECTS = [
-    aspects.CONJUNCTION,
-    aspects.OPPOSITION,
-    aspects.SQUARE,
-    aspects.TRINE,
-    aspects.SEXTILE
+    aspects.CONJ,
+    aspects.OPP,
+    aspects.SQR,
+    aspects.TRI,
+    aspects.SEX
 ]
 
 # פרטי לידה – פתח תקווה
