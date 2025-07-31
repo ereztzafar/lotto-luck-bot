@@ -1,58 +1,40 @@
-from birth_chart import get_birth_chart
-from lotto_bot import send_telegram_message
-from flatlib.geopos import GeoPos
-from flatlib.datetime import Datetime
-from flatlib import const, ephem
 from flatlib.chart import Chart
-from flatlib import aspects
+from flatlib.datetime import Datetime
+from flatlib.geopos import GeoPos
+from flatlib import ephem, aspects
+from lotto_bot import send_telegram_message
 from datetime import datetime
 
-# פרטי הלידה שלך
+# פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
-BIRTH_PLACE = GeoPos('32n05', '34e53')  # פתח תקווה
 TIMEZONE = '+02:00'
+BIRTH_PLACE = GeoPos('32n05', '34e53')  # פ"ת
 
 def start_forecast():
     now = datetime.now()
-    today_str = now.strftime('%d/%m/%Y')
+    header = f"📆 תחזית ליום {now.strftime('%d/%m/%Y')}:\n"
+    header += "🔭 מפת לידה והיבטים בין כוכבים:\n"
 
-    message = f"📆 התחזית האסטרולוגית להיום - {today_str}\n"
-    message += "🔭 מחשב מפת לידה וטרנזיטים...\n"
+    # יצירת מפת לידה
+    birth_dt = Datetime(BIRTH_DATE, BIRTH_TIME, TIMEZONE)
+    objects = ephem.MAJOR_OBJECTS + [ephem.CHIRON]  # הסרנו LILITH
+    chart = Chart(birth_dt, BIRTH_PLACE, IDs=objects)
 
+    aspect_lines = []
+    for i in range(len(objects)):
+        for j in range(i + 1, len(objects)):
+            obj1 = chart.get(objects[i])
+            obj2 = chart.get(objects[j])
+            angle = aspects.angle(obj1, obj2)
+            aspect_type = aspects.aspectType(obj1, obj2, aspects.MAJOR_ASPECTS)
+            if aspect_type:
+                line = f"🔹 {obj1.id} ({obj1.sign}) ⬄ {obj2.id} ({obj2.sign}) - היבט: {aspect_type} ({round(angle)}°)"
+                aspect_lines.append(line)
+
+    message = header + "\n".join(aspect_lines)
+    print(message)
     send_telegram_message(message)
-
-    # מפת לידה
-    birth_chart = get_birth_chart(BIRTH_DATE, BIRTH_TIME, BIRTH_PLACE)
-
-    # מפת טרנזיט של היום
-    today_dt = Datetime(now.strftime('%Y/%m/%d'), now.strftime('%H:%M'), TIMEZONE)
-    transit_chart = Chart(today_dt, BIRTH_PLACE)
-
-    # בדיקת אספקטים בין מפת הלידה לטרנזיטים
-    insights = []
-    for obj in birth_chart.objects:
-        transit = transit_chart.get(obj.id)
-        natal = birth_chart.get(obj.id)
-
-        if not transit or not natal:
-            continue
-
-        angle = abs(transit.lon - natal.lon) % 360
-        aspect_type = aspects.aspectType(angle)
-
-        if aspect_type in [aspects.CONJUNCTION, aspects.TRINE, aspects.SEXTILE]:
-            insights.append(f"✨ {obj.id} בזווית חיובית ({aspect_type}) - פוטנציאל חיובי.")
-        elif aspect_type in [aspects.SQUARE, aspects.OPPOSITION]:
-            insights.append(f"⚠️ {obj.id} בזווית מאתגרת ({aspect_type}) - שים לב.")
-
-    if not insights:
-        insights.append("📌 היום לא נמצאו אספקטים משמעותיים.")
-
-    # שליחת התחזית
-    forecast = "\n".join(insights)
-    send_telegram_message(f"🪐 התחזית:\n{forecast}")
-    print("✅ התחזית נשלחה לטלגרם.")
 
 if __name__ == "__main__":
     start_forecast()
