@@ -29,7 +29,13 @@ CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '813610615')
 # ============ פונקציות עיקריות ============
 
 def create_chart(date, time):
-    return Chart(Datetime(date, time, '+02:00'), BIRTH_PLACE)
+    """יוצר מפת אסטרולוגית עם אזור זמן מדויק לפי היום הנוכחי (כולל שעון קיץ)"""
+    tz = pytz.timezone(TIMEZONE)
+    dt_local = tz.localize(dt.strptime(f"{date} {time}", "%Y/%m/%d %H:%M"))
+    offset = dt_local.strftime('%z')  # לדוגמה: +0300
+    offset_str = f"{offset[:3]}:{offset[3:]}"  # הופך ל־+03:00
+    return Chart(Datetime(date, time, offset_str), BIRTH_PLACE)
+
 
 def analyze_hour(current_date, hour):
     score = 0
@@ -43,7 +49,6 @@ def analyze_hour(current_date, hour):
         birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
         transit_chart = create_chart(current_date, time_str)
 
-        # מחזור על כל צירוף בין כוכבי לידה לכוכבי טרנזיט
         for natal_obj in PLANETS:
             natal = birth_chart.get(natal_obj)
             transit = transit_chart.get(natal_obj)
@@ -52,8 +57,7 @@ def analyze_hour(current_date, hour):
                 reasons.append(f"שגיאה בטעינת {natal_obj}")
                 continue
 
-            # בדיקת זווית בין כוכב לידה לטרנזיט
-            angle = aspects.getAspect(natal.lon, transit.lon, aspects.MAJOR_ASPECTS)
+            angle = aspects.getAspect(natal.lon, transit.lon, MAJOR_ASPECTS)
 
             if angle:
                 if angle == 'CONJ':
@@ -66,7 +70,6 @@ def analyze_hour(current_date, hour):
                     score -= 1
                     reasons.append(f"{natal_obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
 
-            # נסיגה
             if hasattr(transit, 'retro') and transit.retro and natal_obj in [const.MERCURY, const.VENUS, const.MARS]:
                 score -= 1
                 reasons.append(f"{natal_obj} בנסיגה – השפעה מאטה (-1)")
@@ -82,7 +85,6 @@ def analyze_hour(current_date, hour):
     }
 
 
-# טעינת משתני סביבה (GitHub Secrets)
 def load_secrets():
     token = os.getenv("TELEGRAM_TOKEN")
     chat_id = os.getenv("TELEGRAM_CHAT_ID")
@@ -90,14 +92,14 @@ def load_secrets():
         raise Exception("❌ חסר TELEGRAM_TOKEN או TELEGRAM_CHAT_ID ב־Secrets")
     return token, chat_id
 
-# שליחת הודעה בטלגרם
+
 def send_telegram_message(message: str):
     token, chat_id = load_secrets()
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     data = {
         "chat_id": chat_id,
         "text": message,
-        "parse_mode": "HTML"  # 👈 הוספת תמיכה ב־HTML
+        "parse_mode": "HTML"
     }
     response = requests.post(url, data=data)
     print(f"📤 Status: {response.status_code}")
@@ -114,7 +116,6 @@ def daily_forecast():
 
     best = max(results, key=lambda r: r['score'])
 
-    # בניית ההודעה
     message = "🔮 <b>תחזית אסטרולוגית יומית למילוי לוטו</b>:\n\n"
     for res in results:
         message += f"🕒 {res['hour']} – ניקוד: <b>{res['score']}</b>\n"
@@ -124,7 +125,6 @@ def daily_forecast():
 
     message += f"🎯 <b>שעת המזל הטובה ביותר היום: {best['hour']} (ניקוד: {best['score']})</b>"
 
-    # הדפסה לקונסול + שליחה לטלגרם
     print(message)
     send_telegram_message(message)
 
