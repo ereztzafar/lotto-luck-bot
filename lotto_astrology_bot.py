@@ -55,7 +55,7 @@ def analyze_hour(current_date, hour):
                 reasons.append(f"שגיאה בטעינת {natal_obj}")
                 continue
 
-            aspect = aspects.getAspect(natal.lon, transit.lon)
+            aspect = aspects.getAspect(natal.lon, transit.lon, MAJOR_ASPECTS)
 
             if aspect in MAJOR_ASPECTS:
                 if aspect == 'CONJ':
