@@ -92,11 +92,7 @@ def daily_luck_forecast():
             best_score = score
             best_hour = hour_val
 
-    summary = f"🎯 שעת המזל שלך להיום היא: {best_hour:02d}:00 (ניקוד: {best_score})\n"
-    full_forecast = summary + '\n'.join(messages)
-    return full_forecast.strip()
-
-# הרצה ישירה
+   # הרצה ישירה
 if __name__ == "__main__":
     message = daily_luck_forecast()
     send_telegram_message(message)
