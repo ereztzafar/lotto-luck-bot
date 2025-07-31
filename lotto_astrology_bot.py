@@ -2,6 +2,7 @@ from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib import const, aspects
+from flatlib import objects
 import os
 import requests
 from datetime import datetime
@@ -54,8 +55,8 @@ def get_forecast_for_hour(hour):
 
     try:
         birth_dt = Datetime(BIRTH_DATE, BIRTH_TIME, tz)
-        birth_chart = Chart(birth_dt, BIRTH_PLACE, IDs=const.LIST_OBJECTS_EXTENDED)
-        transit_chart = Chart(dt, BIRTH_PLACE, IDs=const.LIST_OBJECTS_EXTENDED)
+        birth_chart = Chart(birth_dt, BIRTH_PLACE, IDs=objects.LIST_OBJECTS)
+        transit_chart = Chart(dt, BIRTH_PLACE, IDs=objects.LIST_OBJECTS)
     except Exception as e:
         return (hour, -999, [f"שגיאה ביצירת מפות אסטרולוגיות: {e}"])
 
