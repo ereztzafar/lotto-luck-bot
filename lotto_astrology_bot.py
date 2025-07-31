@@ -9,12 +9,13 @@ from pytz import timezone
 
 # הגדרה ידנית של זוויות אסטרולוגיות עיקריות (אם MAJOR_ASPECTS לא קיים)
 MAJOR_ASPECTS = [
-    aspects.CONJUNCTION,
-    aspects.OPPOSITION,
-    aspects.SQUARE,
-    aspects.TRINE,
-    aspects.SEXTILE
+    aspect.CONJUNCTION,
+    aspect.OPPOSITION,
+    aspect.SQUARE,
+    aspect.TRINE,
+    aspect.SEXTILE
 ]
+
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
