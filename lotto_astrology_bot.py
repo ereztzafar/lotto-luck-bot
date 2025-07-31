@@ -5,7 +5,7 @@ from flatlib import const
 import os
 import requests
 from datetime import datetime
-from pytz import timezone
+
 
 # פרטי לידה – פתח תקווה
 BIRTH_DATE = '1970/11/22'
