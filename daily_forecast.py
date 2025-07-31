@@ -1,7 +1,7 @@
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib import aspects
+from flatlib import aspects, const
 from lotto_bot import send_telegram_message
 from datetime import datetime
 
@@ -9,13 +9,13 @@ from datetime import datetime
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 TIMEZONE = '+02:00'
-BIRTH_PLACE = GeoPos('32n05', '34e53')  # פ"ת
+BIRTH_PLACE = GeoPos('32n05', '34e53')
 
-# רשימת כוכבים מרכזיים כולל כירון
+# שימוש בקבועים מתוך const במקום ephem.MAJOR_OBJECTS
 OBJECTS = [
-    'SUN', 'MOON', 'MERCURY', 'VENUS', 'MARS',
-    'JUPITER', 'SATURN', 'URANUS', 'NEPTUNE', 'PLUTO',
-    'CHIRON'
+    const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+    const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO,
+    const.CHIRON  # הוספת כירון
 ]
 
 def start_forecast():
