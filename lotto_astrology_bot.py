@@ -28,6 +28,11 @@ def analyze_hour(current_date, hour):
 
     try:
         time_str = f'{hour:02d}:00'
+
+        # המרה לפורמט תואם ל־flatlib
+        if '-' in current_date:
+            current_date = current_date.replace('-', '/')
+
         birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
         transit_chart = create_chart(current_date, time_str)
 
@@ -72,7 +77,7 @@ def analyze_hour(current_date, hour):
 
 def daily_forecast():
     tz = pytz.timezone(TIMEZONE)
-    today = dt.now(tz).strftime('%Y-%m-%d')
+    today = dt.now(tz).strftime('%Y-%m-%d')  # YYYY-MM-DD
     results = []
 
     for hour in [5, 8, 11, 14, 17, 20]:
