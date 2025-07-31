@@ -21,7 +21,6 @@ PLANETS = [
 
 MAJOR_ASPECTS = ['CONJ', 'OPP', 'SQR', 'TRI', 'SEX']
 
-# טוקן ו-Chat ID מתוך משתני סביבה או קבועים ישירות
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN', '7688538382:AAEwE4vlaivb8nqyI9JEGU5FDO4LGTqywMI')
 CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '813610615')
 
@@ -29,11 +28,10 @@ CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '813610615')
 # ============ פונקציות עיקריות ============
 
 def create_chart(date, time):
-    """יוצר מפת אסטרולוגית עם אזור זמן מדויק לפי היום הנוכחי (כולל שעון קיץ)"""
     tz = pytz.timezone(TIMEZONE)
     dt_local = tz.localize(dt.strptime(f"{date} {time}", "%Y/%m/%d %H:%M"))
-    offset = dt_local.strftime('%z')  # לדוגמה: +0300
-    offset_str = f"{offset[:3]}:{offset[3:]}"  # הופך ל־+03:00
+    offset = dt_local.strftime('%z')  # +0300
+    offset_str = f"{offset[:3]}:{offset[3:]}"  # +03:00
     return Chart(Datetime(date, time, offset_str), BIRTH_PLACE)
 
 
@@ -57,16 +55,16 @@ def analyze_hour(current_date, hour):
                 reasons.append(f"שגיאה בטעינת {natal_obj}")
                 continue
 
-            angle = aspects.getAspect(natal.lon, transit.lon, MAJOR_ASPECTS)
+            aspect = aspects.getAspect(natal.lon, transit.lon)
 
-            if angle:
-                if angle == 'CONJ':
+            if aspect in MAJOR_ASPECTS:
+                if aspect == 'CONJ':
                     score += 2
                     reasons.append(f"{natal_obj} בצמידות ללידה – אנרגיה חזקה (+2)")
-                elif angle in ['TRI', 'SEX']:
+                elif aspect in ['TRI', 'SEX']:
                     score += 1
                     reasons.append(f"{natal_obj} בזווית הרמונית – זרימה חיובית (+1)")
-                elif angle in ['SQR', 'OPP']:
+                elif aspect in ['SQR', 'OPP']:
                     score -= 1
                     reasons.append(f"{natal_obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
 
@@ -86,8 +84,8 @@ def analyze_hour(current_date, hour):
 
 
 def load_secrets():
-    token = os.getenv("TELEGRAM_TOKEN")
-    chat_id = os.getenv("TELEGRAM_CHAT_ID")
+    token = os.getenv("TELEGRAM_TOKEN", TELEGRAM_TOKEN)
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", CHAT_ID)
     if not token or not chat_id:
         raise Exception("❌ חסר TELEGRAM_TOKEN או TELEGRAM_CHAT_ID ב־Secrets")
     return token, chat_id
