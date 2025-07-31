@@ -50,7 +50,7 @@ def get_forecast_for_hour(hour):
         return f"❌ שגיאה ביצירת מפות אסטרולוגיות: {e}"
 
     forecast = f"🕒 שעה {hour:02d}:00 – תחזית:"
-"
+
     score = 0
     reasons = []
 
