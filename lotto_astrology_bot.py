@@ -1,3 +1,5 @@
+# lotto_astrology_bot.py
+
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
@@ -69,7 +71,6 @@ def get_lucky_hours(date_str, tz):
     return result
 
 # השוואת מפת טרנזיט למפת לידה
-# השוואת מפת טרנזיט למפת לידה
 def compare_transit_to_birth(transit_chart, birth_chart):
     relevant = [
         const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
@@ -88,9 +89,6 @@ def compare_transit_to_birth(transit_chart, birth_chart):
                 if abs(orb) <= 3:
                     results.append(f"{t_obj} {aspect_name} ל־{b_obj} (אורב {orb:.1f}°)")
     return results
-
-
-
 
 # התחזית האסטרולוגית + שעות מזל
 def get_astrology_forecast():
