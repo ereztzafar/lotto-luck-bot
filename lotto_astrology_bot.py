@@ -85,6 +85,7 @@ def get_forecast_for_hour(hour):
         reasons.append(f"{obj} בזווית מאתגרת – שיבושים אפשריים (-1)")
 
 
+
     return (hour, score, reasons)
 
 # חישוב כל התחזיות לשעות היום
