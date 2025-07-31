@@ -99,9 +99,6 @@ def daily_luck_forecast():
             best_score = score
             best_hour = hour_val
 
-    summary = f"\n🎯 שעת המזל הטובה ביותר היום: {best_hour:02d}:00 (ניקוד: {best_score})"
-    return "🔮 תחזית אסטרולוגית יומית למילוי לוטו:\n" + '\n'.join(messages) + summary
-
 # הרצה ישירה
 if __name__ == "__main__":
     message = daily_luck_forecast()
