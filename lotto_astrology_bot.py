@@ -188,6 +188,6 @@ if __name__ == "__main__":
 # הרצת daily_forecast.py אחרי שליחת התחזית הראשית
 try:
     print("📤 מריץ daily_forecast.py...")
-    subprocess.run(["python", "daily_forecast.py"], check=True)
+    subprocess.run(["python3", "daily_forecast.py"], check=True)
 except Exception as e:
     print(f"❌ שגיאה בהרצת daily_forecast.py: {e}")
