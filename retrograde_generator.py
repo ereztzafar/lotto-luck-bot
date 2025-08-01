@@ -8,7 +8,6 @@ from flatlib.chart import Chart
 def create_chart(date_str, time_str, location):
     return Chart(date_str + ' ' + time_str, location, IDs=const.ID_CHART_TRANSITS)
 
-
 PLANET_TRANSLATIONS = {
     const.MERCURY: "מרקורי",
     const.VENUS: "ונוס",
@@ -44,17 +43,13 @@ def generate_retrogrades(start_date, end_date):
 
         retro_list = []
         for planet in planets:
-    try:
-        obj = chart.get(planet)
-        if hasattr(obj, 'isRetro') and obj.isRetro():
-            heb_name = PLANET_TRANSLATIONS[planet]
-            retro_list.append({
-                "planet": heb_name,
-                "explanation": EXPLANATIONS[heb_name]
-            })
-    except KeyError:
-        print(f"⚠️ כוכב {planet} לא נמצא במפה")
-
+            try:
+                obj = chart.get(planet)
+                if hasattr(obj, 'isRetro') and obj.isRetro():
+                    heb_name = PLANET_TRANSLATIONS[planet]
+                    retro_list.append({
+                        "planet": heb_name,
+                        "explanation": EXPLANATIONS[heb_name]
                     })
             except KeyError:
                 print(f"⚠️ כוכב {planet} לא נמצא במפה")
