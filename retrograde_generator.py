@@ -5,6 +5,7 @@ from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib.datetime import Date
 from flatlib import const
+from datetime import datetime
 
 PLANET_TRANSLATIONS = {
     const.MERCURY: "מרקורי",
@@ -29,9 +30,9 @@ EXPLANATIONS = {
 }
 
 def create_chart(date_str, time_str, location):
-    dt = Date(date_str, time_str)        # מייצר אובייקט של flatlib
-    dt_ephem = ephem.Date(str(dt))       # ממיר ל־ephem.Date ← זה קריטי
-    return Chart(str(dt), location), dt_ephem  # מחזיר גם את תאריך ephem
+    dt = Date(date_str, time_str)                       # מייצר אובייקט של flatlib
+    dt_ephem = ephem.Date(f"{date_str} {time_str}:00")  # הפורמט ש־ephem מצפה לו
+    return Chart(str(dt), location), dt_ephem
 
 def generate_retrogrades(start_date, end_date):
     location = GeoPos("32n5", "34e53")
@@ -40,9 +41,9 @@ def generate_retrogrades(start_date, end_date):
 
     for day in range((end_date - start_date).days + 1):
         current_date = start_date + datetime.timedelta(days=day)
-        date_str = current_date.strftime("%Y/%m/%d")
+        date_str = current_date.strftime("%Y-%m-%d")  # תיקון פורמט
         key = current_date.strftime("%Y-%m-%d")
-        chart = create_chart(date_str, "12:00", location)
+        chart, _ = create_chart(date_str, "12:00", location)
 
         retro_list = []
         for planet in planets:
