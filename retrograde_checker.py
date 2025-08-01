@@ -9,11 +9,9 @@ def get_current_retrogrades():
     now = datetime.datetime.now()
     date = now.strftime('%Y/%m/%d')
     time = now.strftime('%H:%M')
+    pos = GeoPos("32n5", "34e53")  # מיקום פתח תקווה
 
-    # מיקום גאוגרפי כללי – אפשר לשנות לפי מיקום מדויק יותר
-    pos = GeoPos("32n5", "34e53")
     chart = Chart(date, time, pos)
-
     retrogrades = []
     for planet in [const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN,
                    const.URANUS, const.NEPTUNE, const.PLUTO]:
