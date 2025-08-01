@@ -7,7 +7,7 @@ from telegram_sender import send_telegram_message, load_secrets
 
 def main():
     # פרטי הלידה שלך (שמורים מראש בקוד או בקובץ)
-    birth_date = '1970-11-22'
+    birth_date = '1970/11/22'
     birth_time = '06:00'
     
     # מיקום בפורמט תקין: מעלות, דקות, וכיוון (פתח תקווה = 32°5′N, 34°53′E)
