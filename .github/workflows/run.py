@@ -1,25 +1,29 @@
-# run.py
+name: AstroLotto Forecast Bot
 
-from birth_chart_loader import load_birth_chart
-from daily_forecast import generate_daily_forecast
-from telegram_sender import send_forecast_to_telegram
+on:
+  workflow_dispatch:   # מאפשר הרצה ידנית דרך GitHub Actions
+  schedule:
+    - cron: '0 5-22/3 * * *'  # מריץ כל 3 שעות בין 05:00 ל־22:00
 
-def main():
-    print("🎯 מריץ את בוט המזל האסטרולוגי...")
+jobs:
+  run-astrolotto:
+    runs-on: ubuntu-latest
 
-    # טוען נתוני לידה מקובץ birth_chart.json
-    natal_chart = load_birth_chart()
-    if not natal_chart:
-        print("❌ לא ניתן לטעון את מפת הלידה.")
-        return
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    # הפקת תחזית יומית לפי נתוני הלידה
-    forecast_message = generate_daily_forecast(natal_chart)
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
 
-    # שליחת התחזית לטלגרם
-    send_forecast_to_telegram(forecast_message)
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-    print("✅ התחזית נשלחה בהצלחה!")
+    - name: Run forecast bot
+      run: python run.py
 
-if __name__ == "__main__":
-    main()
+
