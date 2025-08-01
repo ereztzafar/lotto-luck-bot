@@ -29,9 +29,9 @@ EXPLANATIONS = {
 }
 
 def create_chart(date_str, time_str, location):
-    dt = Date(date_str, time_str)  # זה האובייקט של flatlib
-    dt_ephem = ephem.Date(f"{date_str} {time_str}:00")  # זה האובייקט של ephem
-    return Chart(dt, location), dt_ephem
+    dt_flatlib = Date(date_str, time_str)  # זה לפלטליב
+    dt_ephem = ephem.Date(f"{date_str} {time_str}:00")  # זה לאפם
+    return Chart(dt_flatlib, location), dt_ephem
 
 
 
