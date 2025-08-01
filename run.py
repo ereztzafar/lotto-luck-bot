@@ -21,7 +21,7 @@ def get_retrograde_planets(transit_chart):
     for p, explanation in planets.items():
         planet = transit_chart.get(p)
         if planet.isRetrograde:
-            retrogrades.append((planet.name, explanation))
+            retrogrades.append((planet.id, explanation))
     return retrogrades
 
 def main():
