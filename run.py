@@ -40,7 +40,7 @@ def main():
     transit_chart = create_chart(now_date, now_time, birth_location)
 
     # שעות מזל
-    lucky_hours = find_lucky_hours(birth_chart)  # ✅ תיקון: רק birth_chart
+    lucky_hours = find_lucky_hours(birth_chart, transit_chart)  # ✅ מתוקן: שני פרמטרים
 
     # נסיגות
     retrogrades = get_retrograde_planets(transit_chart)
