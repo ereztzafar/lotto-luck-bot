@@ -1,34 +1,22 @@
+import datetime
+import json
+import os
 from flatlib.geopos import GeoPos
 from astro_utils import create_chart
 from birth_chart_loader import load_birth_chart
 from daily_forecast import find_lucky_hours
 from telegram_sender import send_telegram_message, load_secrets
-from flatlib import const
-import datetime
 
-def get_retrograde_planets(transit_chart):
-    retrogrades = []
+RETRO_FILE = "retrogrades.json"
+
+def load_retrogrades(date_str):
+    if not os.path.exists(RETRO_FILE):
+        return []
+
+    with open(RETRO_FILE, "r", encoding="utf-8") as f:
+        data = json.load(f)
     
-    planets = {
-        const.MERCURY: "מרקורי – זהירות בנסיעות, תקשורת, טעויות",
-        const.VENUS: "ונוס – קושי בזוגיות או כספים",
-        const.MARS: "מאדים – אנרגיה נמוכה, עימותים פנימיים",
-        const.JUPITER: "צדק – עיכוב בהצלחה, צורך בלמידה פנימית",
-        const.SATURN: "שבתאי – שיעורים בקארמה, אתגרים בזמנים",
-        const.URANUS: "אורנוס – שינויים לא צפויים מתעכבים",
-        const.NEPTUNE: "נפטון – בלבול, דמיון מופרז, צורך בבהירות",
-        const.PLUTO: "פלוטו – התמרה עמוקה, שחרור שליטה"
-    }
-
-    for planet_name, explanation in planets.items():
-        try:
-            planet = transit_chart.get(planet_name)
-            if planet and planet.retro:  # ✅ תיקון כאן
-                retrogrades.append((planet.id, explanation))
-        except Exception:
-            continue
-
-    return retrogrades
+    return data.get(date_str, [])
 
 def main():
     # פרטי הלידה שלך
@@ -36,28 +24,29 @@ def main():
     birth_time = '06:00'
     birth_location = GeoPos("32n5", "34e53")
 
-    # יצירת מפת לידה
-    birth_chart = create_chart(birth_date, birth_time, birth_location)
-
-    # מפת טרנזיט נוכחית
+    # תאריך נוכחי
     now = datetime.datetime.now()
     now_date = now.strftime('%Y/%m/%d')
+    now_date_key = now.strftime('%Y-%m-%d')
     now_time = now.strftime('%H:%M')
+
+    # יצירת מפות
+    birth_chart = create_chart(birth_date, birth_time, birth_location)
     transit_chart = create_chart(now_date, now_time, birth_location)
 
-    # שעות מזל
+    # שליפת שעות מזל
     lucky_hours = find_lucky_hours(birth_chart, transit_chart)
 
-    # נסיגות
-    retrogrades = get_retrograde_planets(transit_chart)
+    # שליפת נסיגות מהקובץ
+    retrogrades = load_retrogrades(now_date_key)
 
     # בניית הודעה
-    message = f"🔮 תחזית אסטרולוגית {now_date.replace('/', '-')} ({now_time}):\n"
+    message = f"🔮 תחזית אסטרולוגית {now_date_key} ({now_time}):\n"
 
     if retrogrades:
         message += "\n🔁 <b>כוכבים בנסיגה:</b>\n"
-        for name, explanation in retrogrades:
-            message += f"• {name} בנסיגה – {explanation}\n"
+        for r in retrogrades:
+            message += f"• {r['planet']} בנסיגה – {r['explanation']}\n"
     else:
         message += "\n✅ אין כוכבים בנסיגה כרגע.\n"
 
