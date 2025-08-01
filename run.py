@@ -11,10 +11,10 @@ RETRO_FILE = "retrogrades.json"
 
 def load_retrogrades_for_today():
     today = datetime.datetime.now().strftime('%Y-%m-%d')
-    if not os.path.exists("retrogrades.json"):
+    if not os.path.exists(RETRO_FILE):
         return []
 
-    with open("retrogrades.json", "r", encoding="utf-8") as f:
+    with open(RETRO_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data.get(today, [])
 
@@ -38,7 +38,7 @@ def main():
     lucky_hours = find_lucky_hours(birth_chart, transit_chart)
 
     # שליפת נסיגות מהקובץ
-    retrogrades = load_retrogrades(now_date_key)
+    retrogrades = load_retrogrades_for_today()
 
     # בניית הודעה
     message = f"🔮 תחזית אסטרולוגית {now_date_key} ({now_time}):\n"
