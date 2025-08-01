@@ -1,5 +1,6 @@
 import json
 import datetime
+import ephem
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib.datetime import Date
@@ -28,8 +29,9 @@ EXPLANATIONS = {
 }
 
 def create_chart(date_str, time_str, location):
-    dt = Date(date_str, time_str)
-    return Chart(str(dt), location)
+    dt = Date(date_str, time_str)        # מייצר אובייקט של flatlib
+    dt_ephem = ephem.Date(str(dt))       # ממיר ל־ephem.Date ← זה קריטי
+    return Chart(str(dt), location), dt_ephem  # מחזיר גם את תאריך ephem
 
 def generate_retrogrades(start_date, end_date):
     location = GeoPos("32n5", "34e53")
