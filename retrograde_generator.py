@@ -28,8 +28,8 @@ EXPLANATIONS = {
 }
 
 def create_chart(date_str, time_str, location):
-    date = Date(date_str, time_str)
-    return Chart(date, location)
+    dt = Date(date_str, time_str)
+    return Chart(str(dt), location)
 
 def generate_retrogrades(start_date, end_date):
     location = GeoPos("32n5", "34e53")
