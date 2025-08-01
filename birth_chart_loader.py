@@ -1,20 +1,14 @@
-from astro_utils import calculate_chart  # ודא שהקובץ astro_utils.py כולל פונקציה בשם calculate_chart
+from astro_utils import create_chart  # שם הפונקציה כפי שמופיע אצלך
 
 def load_birth_chart(date_str, time_str, location_str):
     """
     טוען מפת לידה לפי תאריך, שעה ומיקום.
-    פרמטרים:
-        date_str: מחרוזת תאריך בפורמט YYYY-MM-DD
-        time_str: מחרוזת שעה בפורמט HH:MM
-        location_str: מיקום כתובת/עיר
-    מחזיר:
-        birth_chart (אובייקט של מפת לידה)
     """
-    return calculate_chart(date_str, time_str, location_str)
+    return create_chart(date_str, time_str, location_str)
 
 def generate_birth_report(birth_chart):
     """
-    מחזיר רשימה של תיאור כוכבים לפי מפת לידה נתונה.
+    יוצר דו״ח קצר של מיקומי כוכבים במפת הלידה.
     """
     report = []
     for obj in birth_chart.objects:
@@ -22,4 +16,5 @@ def generate_birth_report(birth_chart):
             continue
         report.append(f"{obj} ב־{obj.sign} {obj.signlon}")
     return report
+
 
