@@ -1,7 +1,9 @@
 flatlib==0.2.3
+flatlib[swisseph]
 requests
 pytz
 ephem
+
 
 
 
