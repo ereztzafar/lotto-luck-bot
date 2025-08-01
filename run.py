@@ -1,10 +1,10 @@
-import os
-import datetime
+from flatlib.geopos import GeoPos
 from astro_utils import create_chart
 from birth_chart_loader import load_birth_chart
 from daily_forecast import find_lucky_hours
 from telegram_sender import send_telegram_message, load_secrets
 from flatlib import const
+import datetime
 
 def get_retrograde_planets(transit_chart):
     retrogrades = []
@@ -28,7 +28,7 @@ def main():
     # פרטי הלידה שלך
     birth_date = '1970/11/22'
     birth_time = '06:00'
-    birth_location = '32n5,34e53'  # פתח תקווה
+    birth_location = GeoPos("32n5", "34e53")
 
     # יצירת מפת לידה
     birth_chart = create_chart(birth_date, birth_time, birth_location)
@@ -40,7 +40,7 @@ def main():
     transit_chart = create_chart(now_date, now_time, birth_location)
 
     # שעות מזל
-    lucky_hours = find_lucky_hours(birth_chart, transit_chart)
+    lucky_hours = find_lucky_hours(birth_chart)  # ✅ תיקון: רק birth_chart
 
     # נסיגות
     retrogrades = get_retrograde_planets(transit_chart)
