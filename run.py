@@ -14,7 +14,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 
 # ---------- פרטי לידה ----------
-BIRTH_DATE = '1970-11-22'
+BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 LOCATION = GeoPos('32n5', '34e53')  # פתח תקווה
 
