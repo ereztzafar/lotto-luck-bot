@@ -31,7 +31,8 @@ EXPLANATIONS = {
 def create_chart(date_str, time_str, location):
     dt = Date(date_str, time_str)
     dt_ephem = ephem.Date(f"{date_str} {time_str}:00")  # סוג תאריך תואם ephem
-    return Chart(dt, location), dt_ephem
+    return Chart(ephem.Date(f"{date_str} {time_str}:00"), location), ephem.Date(f"{date_str} {time_str}:00")
+
 
 
 def generate_retrogrades(start_date, end_date):
