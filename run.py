@@ -9,7 +9,9 @@ def main():
     # פרטי הלידה שלך (שמורים מראש בקוד או בקובץ)
     birth_date = '1970-11-22'
     birth_time = '06:00'
-    birth_location = '32.0840,34.8878'  # פתח תקווה
+    
+    # מיקום בפורמט תקין: מעלות, דקות, וכיוון (פתח תקווה = 32°5′N, 34°53′E)
+    birth_location = '32n5,34e53'
 
     # טעינת מפת לידה
     birth_chart = create_chart(birth_date, birth_time, birth_location)
