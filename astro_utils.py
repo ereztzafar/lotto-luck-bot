@@ -9,4 +9,6 @@ def create_chart(date_str, time_str, location):
     else:
         pos = location  # כבר אובייקט מסוג GeoPos
 
-    return Chart(Datetime(date_str, time_str, '+02:00'), pos)
+    dt = Datetime(date_str, time_str, '+02:00')
+    return Chart(dt, pos, useSwissEphem=True)  # ⚠️ קריטי בשביל obj.retro
+
