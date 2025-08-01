@@ -7,10 +7,9 @@ import datetime
 # מיקום הלידה הקבוע שלך (פתח תקווה)
 BIRTH_LOCATION = GeoPos("32n5", "34e53")  # פתח תקווה לפי פורמט flatlib
 
-def find_lucky_hours(birth_chart):
-    """
-    מחזירה שעות מזל לפי היבטים חיוביים בין הירח במפת הטרנזיט לבין שמש/ונוס/צדק במפת הלידה.
-    """
+def find_lucky_hours(birth_chart, current_chart):
+    from flatlib import const
+
     lucky_hours = []
     now = datetime.datetime.now()
 
@@ -25,9 +24,8 @@ def find_lucky_hours(birth_chart):
         targets = [const.SUN, const.VENUS, const.JUPITER]
         for target in targets:
             natal_obj = birth_chart.get(target)
+            aspects_list = moon.aspectList([natal_obj])
 
-            # קבלת רשימת ההיבטים לירח מול הכוכב
-            aspects_list = aspects.getAspects(moon, [natal_obj])
             for asp in aspects_list:
                 if asp.type in [const.TRINE, const.SEXTILE]:
                     retro_note = ' (🔁 נסיגה)' if natal_obj.retro else ''
