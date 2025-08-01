@@ -10,7 +10,7 @@ BIRTH_LOCATION = GeoPos("32n5", "34e53")  # פתח תקווה לפי פורמט 
 def find_lucky_hours(birth_chart, current_chart):
     """
     משווה בין מפת הלידה למפת הטרנזיט ומחזירה שעות מזל להגרלות (לוטו, חישגד, צ'אנס).
-    נבדק היבט חיובי לירח מול שמש/ונוס/צדק – אם אין נסיגה שפוגעת באיכות.
+    נבדק היבט חיובי של הירח מול שמש/ונוס/צדק – אם אין נסיגה שפוגעת באיכות.
     """
     lucky_hours = []
     now = datetime.datetime.now()
@@ -28,20 +28,12 @@ def find_lucky_hours(birth_chart, current_chart):
         targets = [const.SUN, const.VENUS, const.JUPITER]
         for target in targets:
             natal_obj = birth_chart.get(target)
-            aspects = moon.aspectList([
-    birth_chart.get(const.SUN),
-    birth_chart.get(const.VENUS),
-    birth_chart.get(const.JUPITER)
-])
-
+            aspects = moon.aspectList([natal_obj])
 
             for asp in aspects:
                 if asp.type in [const.TRINE, const.SEXTILE]:
-                    retro_note = ''
-                    if natal_obj.retro:
-                        retro_note = ' (🔁 נסיגה)'
-
+                    retro_note = ' (🔁 נסיגה)' if natal_obj.retro else ''
                     lucky_hours.append(f"{time_str} – {asp.type} ל־{target}{retro_note}")
-                    break  # רק היבט אחד מספיק
+                    break  # מספיק היבט חיובי אחד
 
     return lucky_hours
