@@ -40,25 +40,28 @@ def generate_retrogrades(start_date, end_date):
 
         retro_list = []
         for planet in planets:
-            obj = chart.get(planet)
             try:
-                if obj.speed() < 0:
-                    heb_name = PLANET_TRANSLATIONS[planet]
-                    retro_list.append({
-                        "planet": heb_name,
-                        "explanation": EXPLANATIONS[heb_name]
-                    })
-            except AttributeError:
-                print(f"⚠️ כוכב {planet} לא תומך ב-speed()")
+                obj = chart.get(planet)
+                if hasattr(obj, "speed") and callable(obj.speed):
+                    if obj.speed() < 0:
+                        heb_name = PLANET_TRANSLATIONS[planet]
+                        retro_list.append({
+                            "planet": heb_name,
+                            "explanation": EXPLANATIONS[heb_name]
+                        })
+                else:
+                    print(f"⚠️ כוכב {planet} לא תומך ב-speed()")
+            except KeyError:
+                print(f"⚠️ כוכב {planet} לא נמצא במפה")
 
         if retro_list:
             result[key] = retro_list
 
-    # שמירה לקובץ
     with open("retrogrades.json", "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
     print(f"✅ קובץ retrogrades.json עודכן עבור {len(result)} ימים")
+
 
 if __name__ == "__main__":
     today = datetime.date.today()
