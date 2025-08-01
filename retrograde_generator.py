@@ -43,7 +43,8 @@ def generate_retrogrades(start_date, end_date):
         current_date = start_date + timedelta(days=day)
         date_str = current_date.strftime("%Y/%m/%d")
         key = current_date.strftime("%Y-%m-%d")
-        chart, _ = create_chart(date_str, "12:00", location)
+        chart, dt_ephem = create_chart(date_str, "12:00", location)
+
 
         retro_list = []
         for planet in planets:
