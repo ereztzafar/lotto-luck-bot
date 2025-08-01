@@ -8,13 +8,11 @@ import datetime
 # מיקום הלידה הקבוע שלך (פתח תקווה)
 BIRTH_LOCATION = GeoPos("32n5", "34e53")  # פתח תקווה לפי פורמט flatlib
 
-
 def find_lucky_hours(birth_chart, current_chart):
     """
     משווה בין מפת הלידה למפת הטרנזיט ומחזירה שעות מומלצות למילוי לוטו.
     התנאי הראשוני: ירח ב־Trine / Sextile לשמש, ונוס, צדק.
     """
-
     lucky_hours = []
 
     # כוכבים נבחרים לבדיקה
@@ -25,7 +23,7 @@ def find_lucky_hours(birth_chart, current_chart):
     # בדיקת כל שעתיים היום (מ־05:00 עד 23:00)
     for hour in range(5, 24, 2):
         forecast_time = now.replace(hour=hour, minute=0, second=0, microsecond=0)
-        date_str = forecast_time.strftime('%Y-%m-%d')
+        date_str = forecast_time.strftime('%Y/%m/%d')  # ✅ תיקון פורמט התאריך
         time_str = forecast_time.strftime('%H:%M')
 
         transit_chart = Chart(Datetime(date_str, time_str, '+02:00'), BIRTH_LOCATION)
