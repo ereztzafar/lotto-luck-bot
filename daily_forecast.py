@@ -6,7 +6,7 @@ from flatlib.geopos import GeoPos
 import datetime
 
 # מיקום הלידה הקבוע שלך (פתח תקווה)
-BIRTH_LOCATION = GeoPos("32.0840", "34.8878")
+BIRTH_LOCATION = GeoPos("32n5", "34e53")  # פתח תקווה לפי פורמט flatlib
 
 
 def find_lucky_hours(birth_chart, current_chart):
