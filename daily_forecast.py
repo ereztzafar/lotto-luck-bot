@@ -26,7 +26,7 @@ def find_lucky_hours(birth_chart, current_chart):
             natal_obj = birth_chart.get(target)
 
             # חשב את האספקט בין הירח לכוכב הזה
-            aspect = aspects.getAspect(moon, natal_obj)
+            aspect = aspects.getAspect(moon, natal_obj, [const.TRINE, const.SEXTILE])
             if aspect and aspect.type in [const.TRINE, const.SEXTILE]:
                 retro_note = ' (🔁 נסיגה)' if natal_obj.retro else ''
                 lucky_hours.append(f"{time_str} – {aspect.type} ל־{target}{retro_note}")
