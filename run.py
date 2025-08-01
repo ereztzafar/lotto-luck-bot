@@ -23,9 +23,8 @@ START_HOUR = 5
 END_HOUR = 23
 
 
-# ---------- כוכבים עיקריים ----------
-PLANETS = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
-           const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO]
+# ---------- כוכבים הקשורים לכסף בלבד ----------
+PLANETS = [const.MOON, const.VENUS, const.JUPITER, const.PLUTO]
 
 
 # ---------- זוויות הרמוניות (במעלות) ----------
@@ -57,9 +56,9 @@ def harmony_score(birth_chart, transit_chart):
 
 # ---------- דירוג מילולי ----------
 def classify_score(score):
-    if score >= 25:
+    if score >= 10:
         return '🟩 יום חזק'
-    elif score >= 15:
+    elif score >= 5:
         return '🟨 יום בינוני'
     else:
         return '🟥 יום חלש'
@@ -94,7 +93,7 @@ def analyze_today():
         transit_chart = create_chart(today, hour_str, LOCATION)
         score = harmony_score(birth_chart, transit_chart)
 
-        if score >= 15:
+        if score >= 5:
             lucky_hours.append((hour_str, score))
 
     # שליחת נסיגות
@@ -123,3 +122,4 @@ def analyze_today():
 # ---------- הפעלה ----------
 if __name__ == "__main__":
     analyze_today()
+
