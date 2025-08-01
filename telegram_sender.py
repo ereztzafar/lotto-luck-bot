@@ -9,7 +9,6 @@ def load_secrets():
         raise Exception("❌ חסר TELEGRAM_TOKEN או TELEGRAM_CHAT_ID במשתני הסביבה")
     return token, chat_id
 
-
 def send_telegram_message(message, token=None, chat_id=None):
     if not token or not chat_id:
         token, chat_id = load_secrets()
@@ -27,3 +26,4 @@ def send_telegram_message(message, token=None, chat_id=None):
         print("✅ הודעה נשלחה לטלגרם בהצלחה.")
     except Exception as e:
         print(f"❌ שגיאה בשליחת הודעה לטלגרם: {e}")
+
