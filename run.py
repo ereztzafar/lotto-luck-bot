@@ -10,22 +10,25 @@ from flatlib import const
 
 def get_retrograde_planets(transit_chart):
     retrogrades = []
+    
     planets = {
         const.MERCURY: "מרקורי – זהירות בנסיעות, תקשורת, טעויות",
         const.VENUS: "ונוס – קושי בזוגיות או כספים",
         const.MARS: "מאדים – אנרגיה נמוכה, עימותים פנימיים",
         const.JUPITER: "צדק – עיכוב בהצלחה, צורך בלמידה פנימית",
-        const.SATURN: "שבתאי – שיעורים בקארמה, אתגרים בזמנים"
-        # אוראנוס, נפטון ופלוטו אינם זמינים ב־flatlib ולכן הוסרו
+        const.SATURN: "שבתאי – שיעורים בקארמה, אתגרים בזמנים",
+        const.NEPTUNE: "נפטון – בלבול, דמיון מופרז, צורך בבהירות",
+        const.PLUTO: "פלוטו – התמרה עמוקה, שחרור שליטה"
     }
-    for p, explanation in planets.items():
+
+    for planet_name, explanation in planets.items():
         try:
-            planet = transit_chart.get(p)
-            if planet.isRetrograde:
+            planet = transit_chart.get(planet_name)
+            if planet and planet.isRetrograde:
                 retrogrades.append((planet.id, explanation))
         except KeyError:
-            # מתעלם מכוכבים שלא קיימים במפה
-            continue
+            continue  # מדלג אם הכוכב לא נמצא במפה
+
     return retrogrades
 
 
