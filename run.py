@@ -3,20 +3,20 @@ from astro_utils import create_chart
 from birth_chart_loader import load_birth_chart
 from daily_forecast import find_lucky_hours
 from telegram_sender import send_telegram_message, load_secrets
-from flatlib.planets import MERCURY, VENUS, MARS, JUPITER, SATURN, URANUS, NEPTUNE, PLUTO
+from flatlib import const
 import datetime
 
 def get_retrograde_planets(transit_chart):
     retrogrades = []
     planets = {
-        MERCURY: "מרקורי – זהירות בנסיעות, תקשורת, טעויות",
-        VENUS: "ונוס – קושי בזוגיות או כספים",
-        MARS: "מאדים – אנרגיה נמוכה, עימותים פנימיים",
-        JUPITER: "צדק – עיכוב בהצלחה, צורך בלמידה פנימית",
-        SATURN: "שבתאי – שיעורים בקארמה, אתגרים בזמנים",
-        URANUS: "אורנוס – שינויים לא צפויים מתעכבים",
-        NEPTUNE: "נפטון – בלבול, דמיון מופרז, צורך בבהירות",
-        PLUTO: "פלוטו – התמרה עמוקה, שחרור שליטה"
+        const.MERCURY: "מרקורי – זהירות בנסיעות, תקשורת, טעויות",
+        const.VENUS: "ונוס – קושי בזוגיות או כספים",
+        const.MARS: "מאדים – אנרגיה נמוכה, עימותים פנימיים",
+        const.JUPITER: "צדק – עיכוב בהצלחה, צורך בלמידה פנימית",
+        const.SATURN: "שבתאי – שיעורים בקארמה, אתגרים בזמנים",
+        const.URANUS: "אורנוס – שינויים לא צפויים מתעכבים",
+        const.NEPTUNE: "נפטון – בלבול, דמיון מופרז, צורך בבהירות",
+        const.PLUTO: "פלוטו – התמרה עמוקה, שחרור שליטה"
     }
     for p, explanation in planets.items():
         planet = transit_chart.get(p)
