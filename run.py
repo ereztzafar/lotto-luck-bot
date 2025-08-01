@@ -6,8 +6,6 @@ from telegram_sender import send_telegram_message, load_secrets
 from flatlib import const
 import datetime
 
-from flatlib import const
-
 def get_retrograde_planets(transit_chart):
     retrogrades = []
     
@@ -17,6 +15,7 @@ def get_retrograde_planets(transit_chart):
         const.MARS: "מאדים – אנרגיה נמוכה, עימותים פנימיים",
         const.JUPITER: "צדק – עיכוב בהצלחה, צורך בלמידה פנימית",
         const.SATURN: "שבתאי – שיעורים בקארמה, אתגרים בזמנים",
+        const.URANUS: "אורנוס – שינויים לא צפויים מתעכבים",
         const.NEPTUNE: "נפטון – בלבול, דמיון מופרז, צורך בבהירות",
         const.PLUTO: "פלוטו – התמרה עמוקה, שחרור שליטה"
     }
@@ -24,13 +23,12 @@ def get_retrograde_planets(transit_chart):
     for planet_name, explanation in planets.items():
         try:
             planet = transit_chart.get(planet_name)
-            if planet and planet.isRetrograde:
+            if planet and planet.retro:  # ✅ תיקון כאן
                 retrogrades.append((planet.id, explanation))
-        except KeyError:
-            continue  # מדלג אם הכוכב לא נמצא במפה
+        except Exception:
+            continue
 
     return retrogrades
-
 
 def main():
     # פרטי הלידה שלך
