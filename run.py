@@ -9,14 +9,14 @@ from telegram_sender import send_telegram_message, load_secrets
 
 RETRO_FILE = "retrogrades.json"
 
-def load_retrogrades(date_str):
-    if not os.path.exists(RETRO_FILE):
+def load_retrogrades_for_today():
+    today = datetime.datetime.now().strftime('%Y-%m-%d')
+    if not os.path.exists("retrogrades.json"):
         return []
 
-    with open(RETRO_FILE, "r", encoding="utf-8") as f:
+    with open("retrogrades.json", "r", encoding="utf-8") as f:
         data = json.load(f)
-    
-    return data.get(date_str, [])
+    return data.get(today, [])
 
 def main():
     # פרטי הלידה שלך
