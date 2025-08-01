@@ -40,7 +40,7 @@ def generate_retrogrades(start_date, end_date):
         retro_list = []
         for planet in planets:
             obj = chart.get(planet)
-            if obj.speed < 0:
+            if obj.speed() < 0:
                 heb_name = PLANET_TRANSLATIONS[planet]
                 retro_list.append({
                     "planet": heb_name,
