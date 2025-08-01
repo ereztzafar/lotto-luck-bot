@@ -1,5 +1,4 @@
 import json
-import datetime
 import ephem
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
