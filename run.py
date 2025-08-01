@@ -6,6 +6,12 @@ from astro_utils import create_chart
 from birth_chart_loader import load_birth_chart
 from daily_forecast import find_lucky_hours
 from telegram_sender import send_telegram_message, load_secrets
+from retrograde_generator import generate_retrogrades  # ✅ קריאה למחולל נסיגות
+
+# ✅ הפעלת מחולל נסיגות כל פעם שהבוט רץ
+today = datetime.date.today()
+future = today + datetime.timedelta(days=30)
+generate_retrogrades(today, future)
 
 RETRO_FILE = "retrogrades.json"
 
