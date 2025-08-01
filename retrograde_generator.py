@@ -4,38 +4,59 @@ from flatlib.geopos import GeoPos
 from astro_utils import create_chart
 from flatlib import const
 
-def generate_retrogrades_file():
-    # קואורדינטות פתח תקווה
+PLANET_TRANSLATIONS = {
+    const.MERCURY: "מרקורי",
+    const.VENUS: "ונוס",
+    const.MARS: "מאדים",
+    const.JUPITER: "צדק",
+    const.SATURN: "שבתאי",
+    const.URANUS: "אוראנוס",
+    const.NEPTUNE: "נפטון",
+    const.PLUTO: "פלוטו"
+}
+
+EXPLANATIONS = {
+    "מרקורי": "מומלץ להימנע מחתימה על חוזים או תקשורת חשובה.",
+    "ונוס": "נסיגה שמדגישה עיכובים בקשרים רומנטיים וכספיים.",
+    "מאדים": "כדאי להיזהר מפעולות פזיזות או קונפליקטים.",
+    "צדק": "זהירות מהגזמות או הבטחות שווא.",
+    "שבתאי": "מומלץ להימנע מהחלטות כלכליות גדולות בזמן נסיגת שבתאי.",
+    "אוראנוס": "נסיגה זו עשויה להביא שינויים בלתי צפויים פנימה.",
+    "נפטון": "היזהרו מערפול, בלבול או אשליות.",
+    "פלוטו": "נסיגת פלוטו מצביעה על תהליכים פנימיים עמוקים שדורשים עיבוד."
+}
+
+def generate_retrogrades(start_date, end_date):
     location = GeoPos("32n5", "34e53")
+    planets = list(PLANET_TRANSLATIONS.keys())
+    result = {}
 
-    # תאריך ושעה נוכחיים
-    now = datetime.datetime.now()
-    date_str = now.strftime("%Y/%m/%d")
-    time_str = now.strftime("%H:%M")
+    for day in range((end_date - start_date).days + 1):
+        current_date = start_date + datetime.timedelta(days=day)
+        date_str = current_date.strftime("%Y/%m/%d")
+        key = current_date.strftime("%Y-%m-%d")
+        chart = create_chart(date_str, "12:00", location)
 
-    # מפת טרנזיט
-    chart = create_chart(date_str, time_str, location)
+        retro_list = []
+        for planet in planets:
+            obj = chart.get(planet)
+            if obj.retro:
+                heb_name = PLANET_TRANSLATIONS[planet]
+                retro_list.append({
+                    "planet": heb_name,
+                    "explanation": EXPLANATIONS[heb_name]
+                })
 
-    # כוכבים שרלוונטיים לנסיגה
-    planets = [const.MERCURY, const.VENUS, const.MARS,
-               const.JUPITER, const.SATURN,
-               const.URANUS, const.NEPTUNE, const.PLUTO]
+        if retro_list:
+            result[key] = retro_list
 
-    retro_data = {}
-
-    for planet_name in planets:
-        try:
-            planet = chart.get(planet_name)
-            retro_data[planet.id] = {"retrograde": planet.retro}
-        except Exception:
-            retro_data[planet_name] = {"retrograde": False}
-
-    # שמירה לקובץ JSON
+    # שמירה לקובץ
     with open("retrogrades.json", "w", encoding="utf-8") as f:
-        json.dump(retro_data, f, ensure_ascii=False, indent=2)
+        json.dump(result, f, ensure_ascii=False, indent=2)
 
-    print("✅ קובץ retrogrades.json נוצר בהצלחה")
+    print(f"✅ קובץ retrogrades.json עודכן עבור {len(result)} ימים")
 
 if __name__ == "__main__":
-    generate_retrogrades_file()
-
+    today = datetime.date.today()
+    future = today + datetime.timedelta(days=30)
+    generate_retrogrades(today, future)
