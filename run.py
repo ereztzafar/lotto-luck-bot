@@ -7,7 +7,7 @@ from telegram_sender import send_telegram_message, load_secrets
 
 def main():
     # פרטי הלידה שלך (שמורים מראש בקוד או בקובץ)
-    birth_date = '1970/11/22'
+    birth_date = '1970/11/22'  # פורמט נכון ל-flatlib
     birth_time = '06:00'
     
     # מיקום בפורמט תקין: מעלות, דקות, וכיוון (פתח תקווה = 32°5′N, 34°53′E)
@@ -18,7 +18,7 @@ def main():
 
     # מפת טרנזיט נוכחית
     now = datetime.datetime.now()
-    now_date = now.strftime('%Y-%m-%d')
+    now_date = now.strftime('%Y/%m/%d')  # תיקון כאן
     now_time = now.strftime('%H:%M')
     transit_chart = create_chart(now_date, now_time, birth_location)
 
@@ -26,7 +26,7 @@ def main():
     lucky_hours = find_lucky_hours(birth_chart, transit_chart)
 
     # בניית הודעה
-    message = f"🔮 תחזית אסטרולוגית {now_date} ({now_time}):\n"
+    message = f"🔮 תחזית אסטרולוגית {now_date.replace('/', '-')} ({now_time}):\n"
     if lucky_hours:
         message += "\n🕰️ <b>שעות מזל להיום:</b>\n"
         for hour in lucky_hours:
