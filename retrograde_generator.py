@@ -1,12 +1,9 @@
 import json
 import datetime
 from flatlib.geopos import GeoPos
-from astro_utils import create_chart
-from flatlib import const
 from flatlib.chart import Chart
-
-def create_chart(date_str, time_str, location):
-    return Chart(date_str + ' ' + time_str, location)
+from flatlib.datetime import Date
+from flatlib import const
 
 PLANET_TRANSLATIONS = {
     const.MERCURY: "מרקורי",
@@ -29,6 +26,10 @@ EXPLANATIONS = {
     "נפטון": "היזהרו מערפול, בלבול או אשליות.",
     "פלוטו": "נסיגת פלוטו מצביעה על תהליכים פנימיים עמוקים שדורשים עיבוד."
 }
+
+def create_chart(date_str, time_str, location):
+    date = Date(date_str, time_str)
+    return Chart(date, location)
 
 def generate_retrogrades(start_date, end_date):
     location = GeoPos("32n5", "34e53")
