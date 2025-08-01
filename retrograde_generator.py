@@ -3,6 +3,7 @@ import datetime
 from flatlib.geopos import GeoPos
 from astro_utils import create_chart
 from flatlib import const
+from flatlib.object import Object
 
 PLANET_TRANSLATIONS = {
     const.MERCURY: "מרקורי",
@@ -40,12 +41,15 @@ def generate_retrogrades(start_date, end_date):
         retro_list = []
         for planet in planets:
             obj = chart.get(planet)
-            if obj.speed() < 0:
-                heb_name = PLANET_TRANSLATIONS[planet]
-                retro_list.append({
-                    "planet": heb_name,
-                    "explanation": EXPLANATIONS[heb_name]
-                })
+            try:
+                if obj.speed() < 0:
+                    heb_name = PLANET_TRANSLATIONS[planet]
+                    retro_list.append({
+                        "planet": heb_name,
+                        "explanation": EXPLANATIONS[heb_name]
+                    })
+            except AttributeError:
+                print(f"⚠️ כוכב {planet} לא תומך ב-speed()")
 
         if retro_list:
             result[key] = retro_list
