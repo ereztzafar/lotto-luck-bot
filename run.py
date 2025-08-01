@@ -82,7 +82,7 @@ def send_telegram_message(message):
 
 # ---------- הרצת ניתוח יומי ----------
 def analyze_today():
-    today = datetime.date.today().strftime('%Y-%m-%d')
+    today = datetime.date.today().strftime('%Y/%m/%d')
     message = f"🔮 תחזית אסטרולוגית להיום {today}:\n"
 
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME, LOCATION)
