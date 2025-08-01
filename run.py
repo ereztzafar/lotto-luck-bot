@@ -4,14 +4,13 @@ import requests
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib import const, aspects
+from flatlib import const
 from math import fabs
 
 # ---------- טלגרם ----------
 import telegram
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-
 
 # ---------- פרטי לידה ----------
 BIRTH_DATE = '1970/11/22'
@@ -22,27 +21,28 @@ LOCATION = GeoPos('32n5', '34e53')  # פתח תקווה
 START_HOUR = 5
 END_HOUR = 23
 
+# ---------- כוכבים שקשורים לכסף ----------
+PLANETS = [
+    const.VENUS,     # כסף, אהבה, שפע
+    const.JUPITER,   # מזל, התרחבות, הצלחה
+    const.PLUTO,     # עושר סמוי, כוח
+    const.URANUS,    # הזדמנויות פתאומיות
+    const.NEPTUNE    # אינטואיציה כלכלית
+]
 
-# ---------- כוכבים הקשורים לכסף בלבד ----------
-PLANETS = [const.MOON, const.VENUS, const.JUPITER, const.PLUTO]
-
-
-# ---------- זוויות הרמוניות (במעלות) ----------
+# ---------- זוויות הרמוניות ----------
 HARMONIC_ANGLES = [0, 60, 120, 180]
-
 
 # ---------- בדיקת נסיגה ----------
 def is_retrograde(chart, planet):
     return chart.get(planet).retrograde
-
 
 # ---------- חישוב זווית בין שני כוכבים ----------
 def calc_angle(pos1, pos2):
     angle = fabs(pos1 - pos2) % 360
     return min(angle, 360 - angle)
 
-
-# ---------- קבלת דירוג הרמוני ----------
+# ---------- דירוג הרמוני ----------
 def harmony_score(birth_chart, transit_chart):
     score = 0
     for p1 in PLANETS:
@@ -53,24 +53,28 @@ def harmony_score(birth_chart, transit_chart):
                 score += 1
     return score
 
-
-# ---------- דירוג מילולי ----------
+# ---------- תיאור מילולי ----------
 def classify_score(score):
-    if score >= 10:
-        return '🟩 יום חזק'
+    if score >= 8:
+        return '🟩 זמן חזק'
     elif score >= 5:
-        return '🟨 יום בינוני'
+        return '🟨 זמן בינוני'
     else:
-        return '🟥 יום חלש'
+        return '🟥 זמן חלש'
 
-
-# ---------- יצירת מפת אסטרולוגיה ----------
+# ---------- יצירת מפה עם Swiss Ephemeris ותמיכה בפלוטו ----------
 def create_chart(date_str, time_str, location):
     dt = Datetime(date_str, time_str, '+02:00')
-    return Chart(dt, location)
+    chart = Chart(dt, location, ephemeris='swisseph')
 
+    # טען כוכבים ידנית (במיוחד פלוטו, אורנוס, נפטון)
+    chart.addObject(const.PLUTO)
+    chart.addObject(const.URANUS)
+    chart.addObject(const.NEPTUNE)
 
-# ---------- שליחת הודעה לטלגרם ----------
+    return chart
+
+# ---------- שליחת טלגרם ----------
 def send_telegram_message(message):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         print("❌ חסר TELEGRAM_TOKEN או CHAT_ID")
@@ -78,14 +82,12 @@ def send_telegram_message(message):
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message, parse_mode='HTML')
 
-
-# ---------- הרצת ניתוח יומי ----------
+# ---------- ניתוח יומי ----------
 def analyze_today():
     today = datetime.date.today().strftime('%Y/%m/%d')
-    message = f"🔮 תחזית אסטרולוגית להיום {today}:\n"
+    message = f"💰 <b>תחזית כלכלית אסטרולוגית – {today}</b>\n"
 
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME, LOCATION)
-
     lucky_hours = []
 
     for hour in range(START_HOUR, END_HOUR + 1):
@@ -96,30 +98,26 @@ def analyze_today():
         if score >= 5:
             lucky_hours.append((hour_str, score))
 
-    # שליחת נסיגות
+    # בדיקת נסיגה
     retrogrades = [p for p in PLANETS if is_retrograde(
         create_chart(today, '12:00', LOCATION), p)]
     if retrogrades:
-        message += "\n🔁 <b>כוכבים בנסיגה:</b>\n"
+        message += "\n🔁 <b>כוכבים כלכליים בנסיגה:</b>\n"
         for r in retrogrades:
             message += f"• {r}\n"
     else:
-        message += "\n✅ אין כוכבים בנסיגה.\n"
+        message += "\n✅ אין נסיגות כלכליות היום.\n"
 
     # שעות מזל
     if lucky_hours:
-        message += "\n🕰️ <b>שעות מזל מומלצות:</b>\n"
+        message += "\n🕰️ <b>שעות מזל כלכליות:</b>\n"
         for hour, score in lucky_hours:
-            level = classify_score(score)
-            message += f"• {hour} – {level} ({score} נק')\n"
+            message += f"• {hour} – {classify_score(score)} ({score} נק')\n"
     else:
-        message += "\n❌ אין שעות מזל חזקות היום.\n"
+        message += "\n❌ אין שעות מזל חזקות כלכלית היום.\n"
 
-    # שליחה לטלגרם
     send_telegram_message(message)
-
 
 # ---------- הפעלה ----------
 if __name__ == "__main__":
     analyze_today()
-
