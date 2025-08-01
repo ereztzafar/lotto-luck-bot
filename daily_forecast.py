@@ -20,16 +20,16 @@ def find_lucky_hours(birth_chart, current_chart):
         transit_chart = Chart(Datetime(date_str, time_str, '+02:00'), BIRTH_LOCATION)
         moon = transit_chart.get(const.MOON)
 
-        # בדוק אספקטים בין הירח במעבר לבין כוכבי הלידה
+        # בדוק אספקטים בין הירח לבין כוכבים חשובים במפת הלידה
         targets = [const.SUN, const.VENUS, const.JUPITER]
         for target in targets:
             natal_obj = birth_chart.get(target)
 
-            # חשב את האספקט בין הירח לכוכב הזה
+            # חשב את האספקט בין הירח לכוכב היעד
             aspect = aspects.getAspect(moon, natal_obj, [const.TRINE, const.SEXTILE])
             if aspect and aspect.type in [const.TRINE, const.SEXTILE]:
                 retro_note = ' (🔁 נסיגה)' if natal_obj.retro else ''
                 lucky_hours.append(f"{time_str} – {aspect.type} ל־{target}{retro_note}")
-                break  # מצאנו שעה מוצלחת אחת – אין צורך לבדוק עוד כוכבים
+                break  # אם מצאנו – לא נבדוק עוד כוכבים בשעה הזו
 
     return lucky_hours
