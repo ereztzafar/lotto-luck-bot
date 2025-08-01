@@ -1,10 +1,10 @@
 import json
+from datetime import date, timedelta
 import ephem
 from flatlib.geopos import GeoPos
 from flatlib.chart import Chart
 from flatlib.datetime import Date
 from flatlib import const
-from datetime import datetime
 
 PLANET_TRANSLATIONS = {
     const.MERCURY: "מרקורי",
@@ -29,8 +29,8 @@ EXPLANATIONS = {
 }
 
 def create_chart(date_str, time_str, location):
-    dt = Date(date_str, time_str)                       # מייצר אובייקט של flatlib
-    dt_ephem = ephem.Date(f"{date_str} {time_str}:00")  # הפורמט ש־ephem מצפה לו
+    dt = Date(date_str, time_str)
+    dt_ephem = ephem.Date(str(dt))
     return Chart(str(dt), location), dt_ephem
 
 def generate_retrogrades(start_date, end_date):
@@ -39,8 +39,8 @@ def generate_retrogrades(start_date, end_date):
     result = {}
 
     for day in range((end_date - start_date).days + 1):
-        current_date = start_date + datetime.timedelta(days=day)
-        date_str = current_date.strftime("%Y-%m-%d")  # תיקון פורמט
+        current_date = start_date + timedelta(days=day)
+        date_str = current_date.strftime("%Y/%m/%d")
         key = current_date.strftime("%Y-%m-%d")
         chart, _ = create_chart(date_str, "12:00", location)
 
@@ -65,8 +65,7 @@ def generate_retrogrades(start_date, end_date):
 
     print(f"✅ קובץ retrogrades.json עודכן עבור {len(result)} ימים")
 
-
 if __name__ == "__main__":
-    today = datetime.date.today()
-    future = today + datetime.timedelta(days=30)
+    today = date.today()
+    future = today + timedelta(days=30)
     generate_retrogrades(today, future)
