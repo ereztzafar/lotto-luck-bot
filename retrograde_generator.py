@@ -6,7 +6,7 @@ from flatlib import const
 from flatlib.chart import Chart
 
 def create_chart(date_str, time_str, location):
-    return Chart(date_str + ' ' + time_str, location, IDs=const.ID_CHART_TRANSITS)
+    return Chart(date_str + ' ' + time_str, location)
 
 PLANET_TRANSLATIONS = {
     const.MERCURY: "מרקורי",
