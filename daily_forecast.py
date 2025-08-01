@@ -28,7 +28,12 @@ def find_lucky_hours(birth_chart, current_chart):
         targets = [const.SUN, const.VENUS, const.JUPITER]
         for target in targets:
             natal_obj = birth_chart.get(target)
-            aspects = moon.aspecting(natal_obj)
+            aspects = moon.aspectList([
+    birth_chart.get(const.SUN),
+    birth_chart.get(const.VENUS),
+    birth_chart.get(const.JUPITER)
+])
+
 
             for asp in aspects:
                 if asp.type in [const.TRINE, const.SEXTILE]:
