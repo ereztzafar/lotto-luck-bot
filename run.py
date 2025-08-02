@@ -20,7 +20,7 @@ TIMEZONE = '+02:00'
 # ----------- טווח שעות בדיקה ----------
 START_HOUR = 5
 END_HOUR = 23
-INTERVAL = 4  # כל 4 שעות
+INTERVAL = 2  # כל שעתיים
 
 # ----------- כוכבים עיקריים ----------
 PLANETS = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
@@ -76,16 +76,21 @@ def send_telegram_message(message):
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message, parse_mode='HTML')
 
 def estimate_time_for_aspect(angle):
-    # כל זווית מקבלת טווח זמן משוער
-    base = 12  # סביב הצהריים
+    # טווח זמן של שעתיים וחצי
+    base = 12
+    start = base - 1
+    end = base + 2
     if angle in [0, 180, 120]:
-        return f"{base - 1:02d}:00–{base + 2:02d}:00"
+        start, end = base - 1, base + 2
     elif angle in [60, 150]:
-        return f"{base - 2:02d}:00–{base + 1:02d}:00"
+        start, end = base - 1, base + 1
     elif angle == 90:
-        return f"{base - 3:02d}:00–{base:02d}:00"
+        start, end = base - 2, base + 0
     else:
-        return f"{base - 2:02d}:00–{base + 2:02d}:00"
+        start, end = base - 1, base + 2
+    start = max(START_HOUR, start)
+    end = min(END_HOUR, end)
+    return f"{start:02d}:00–{end:02d}:30"
 
 def analyze_today():
     today = datetime.date.today().strftime('%Y/%m/%d')
@@ -153,13 +158,13 @@ def analyze_today():
         level = classify_score(score)
         message += f"• {h_str} – {level} ({score} נק')\n"
         if score >= 15:
-            lucky_times.append((h_str, score))
+            lucky_times.append((hour, score))
 
     if lucky_times:
         message += "\n🎯 <b>מומלץ למלא לוטו בין:</b>\n"
         for t, s in sorted(lucky_times, key=lambda x: -x[1]):
-            end_hour = int(t[:2]) + 0
-            message += f"<b>{t}–{end_hour:02d}:59</b> 🟢\n"
+            end_h = min(t + 2, END_HOUR)
+            message += f"<b>{t:02d}:00–{end_h:02d}:00</b> 🟢\n"
     else:
         message += "\n❌ אין שעות מזל חזקות היום.\n"
 
