@@ -36,9 +36,11 @@ def is_retrograde(chart, planet):
 
 
 def format_pos(obj):
-    deg = int(obj.lon)
-    min = int((obj.lon - deg) * 60)
-    sec = int(((obj.lon - deg) * 60 - min) * 60)
+    lon = obj.lon % 360
+    deg = int(lon)
+    minutes_float = (lon - deg) * 60
+    min = int(minutes_float)
+    sec = int((minutes_float - min) * 60)
     retro = " ℞" if obj.isRetrograde() else ""
     return f"{obj.sign} {deg}°{min:02d}′{sec:02d}″{retro}"
 
@@ -88,15 +90,17 @@ def analyze_today():
             obj2 = transit_now.get(p2)
             pos2 = obj2.lon
             angle = calc_angle(pos1, pos2)
-            if any(abs(angle - a) <= 6 for a in HARMONIC_ANGLES + CHALLENGING_ANGLES):
-                found_aspect = True
-                if angle in HARMONIC_ANGLES:
-                    symbol = "✅"
-                elif angle in CHALLENGING_ANGLES:
-                    symbol = "⚠️" if angle == 150 else "❌"
-                else:
-                    continue
-                message += f"🔹 {p1} {format_pos(obj1)} ↔ {p2} {format_pos(obj2)} — {int(angle)}° {symbol}\n"
+            for target_angle in HARMONIC_ANGLES + CHALLENGING_ANGLES:
+                if abs(angle - target_angle) <= 6:
+                    found_aspect = True
+                    if target_angle in HARMONIC_ANGLES:
+                        symbol = "✅"
+                    elif target_angle in CHALLENGING_ANGLES:
+                        symbol = "⚠️" if target_angle == 150 else "❌"
+                    else:
+                        continue
+                    message += f"🔹 {p1} {format_pos(obj1)} ↔ {p2} {format_pos(obj2)} — {int(angle)}° {symbol}\n"
+                    break
     if not found_aspect:
         message += "• לא נמצאו זוויות בולטות היום.\n"
     message += "\n"
@@ -105,8 +109,8 @@ def analyze_today():
     retro_birth = [p for p in PLANETS if is_retrograde(birth_chart, p)]
     retro_today = [p for p in PLANETS if is_retrograde(transit_now, p)]
     message += "🔁 <b>כוכבים בנסיגה:</b>\n"
-    message += f"• בלידה: {', '.join([p + ' ℞' for p in retro_birth])}\n"
-    message += f"• היום: {', '.join([p + ' ℞' for p in retro_today])}\n"
+    message += f"• בלידה: {', '.join([p + ' ℞' for p in retro_birth]) or 'ללא'}\n"
+    message += f"• היום: {', '.join([p + ' ℞' for p in retro_today]) or 'ללא'}\n"
     common = set(retro_birth) & set(retro_today)
     if common:
         message += f"✅ <i>השפעה חיובית אפשרית: {', '.join(common)}</i>\n\n"
@@ -126,14 +130,15 @@ def analyze_today():
                 if any(abs(angle - a) <= 6 for a in HARMONIC_ANGLES):
                     score += 1
         level = classify_score(score)
+        message += f"• {h_str} – {level} ({score} נק')\n"
         if score >= 15:
             lucky_times.append((h_str, score))
-        message += f"• {h_str} – {level} ({score} נק')\n"
 
     if lucky_times:
         message += "\n🎯 <b>מומלץ למלא לוטו בין:</b>\n"
-        for t, s in lucky_times:
-            message += f"<b>{t}–{int(t[:2]) + 0:02d}:59</b> 🟢\n"
+        for t, s in sorted(lucky_times, key=lambda x: -x[1]):
+            end_hour = int(t[:2]) + 0
+            message += f"<b>{t}–{end_hour:02d}:59</b> 🟢\n"
     else:
         message += "\n❌ אין שעות מזל חזקות היום.\n"
 
