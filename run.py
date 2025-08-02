@@ -50,7 +50,7 @@ def calc_angle(pos1, pos2):
 
 def create_chart(date_str, time_str):
     dt = Datetime(date_str, time_str, TIMEZONE)
-    return Chart(dt, LOCATION)
+    return Chart(dt, LOCATION, IDs=PLANETS)
 
 
 def classify_score(score):
