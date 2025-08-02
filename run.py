@@ -19,7 +19,7 @@ TIMEZONE = '+02:00'
 
 # ----------- טווח שעות קדימה ----------
 HOURS_FORWARD = 24
-INTERVAL = 3  # קפיצה כל שעתיים
+INTERVAL = 2  # קפיצה כל שעתיים
 
 # ----------- כוכבים עיקריים ----------
 PLANETS = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
