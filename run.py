@@ -79,7 +79,7 @@ def analyze_today():
     transit_now = create_chart(today, '12:00')
 
     # ---------- כוכבי לידה מול טרנזיט ----------
-    message += "🌌 <b>כוכבי לידה מול טרנזיט:</b>\n<pre>"
+    message += "🌌 <b>כוכבי לידה מול טרנזיט:</b>\n"
     found_aspect = False
     for p1 in PLANETS:
         obj1 = birth_chart.get(p1)
@@ -98,8 +98,8 @@ def analyze_today():
                     continue
                 message += f"• {p1} {format_pos(obj1)} ↔ {p2} {format_pos(obj2)} — {int(angle)}° {symbol}\n"
     if not found_aspect:
-        message += "לא נמצאו זוויות בולטות היום.\n"
-    message += "</pre>\n"
+        message += "• לא נמצאו זוויות בולטות היום.\n"
+    message += "\n"
 
     # ---------- נסיגות ----------
     retro_birth = [p for p in PLANETS if is_retrograde(birth_chart, p)]
