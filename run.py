@@ -84,7 +84,9 @@ def send_telegram_message(message):
         print(f"שגיאת טלגרם: {e}")
 
 def analyze_today():
-    today = datetime.date.today().strftime('%Y/%m/%d')
+    now = datetime.datetime.now()
+    end_time = now + datetime.timedelta(hours=24)
+    message = f"📆 <b>תחזית אסטרולוגית ל־24 שעות הקרובות – {now.strftime('%Y/%m/%d %H:%M')}</b>\n"
     message = f"📆 <b>תחזית אסטרולוגית יומית – {today}</b>\n"
     message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n🕰️ שעות נבדקות: {START_HOUR}:00–{END_HOUR}:00\n\n"
 
