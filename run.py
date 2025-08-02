@@ -68,10 +68,10 @@ def estimate_time_range(angle):
     if angle in [0, 120, 180]:
         return "08:00–14:00"
     elif angle in [60, 150]:
-        return "11:00–13:00"
+        return "08:00–14:00"
     elif angle == 90:
         return "08:00–14:00"
-    return "11:00–14:00"
+    return "08:00–14:00"
 
 def send_telegram_message(message):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
