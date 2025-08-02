@@ -17,15 +17,14 @@ BIRTH_TIME = '06:00'
 LOCATION = GeoPos('32n5', '34e53')  # פתח תקווה
 TIMEZONE = '+02:00'
 
-# ----------- טווח שעות ----------
+# ----------- טווח שעות בדיקה ----------
+START_HOUR = 5
+END_HOUR = 23
 INTERVAL = 3  # כל שעתיים
-DURATION_HOURS = 24  # סריקה ל-24 שעות קדימה
 
 # ----------- כוכבים עיקריים ----------
-PLANETS = [
-    const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
-    const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
-]
+PLANETS = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+           const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO]
 
 # ----------- זוויות חשובות ----------
 HARMONIC_ANGLES = [0, 60, 120, 180]
@@ -41,6 +40,18 @@ ASPECT_MEANINGS = {
     180: "אופוזיציה – מתח בין הפכים"
 }
 
+def is_retrograde(chart, planet):
+    return chart.get(planet).isRetrograde()
+
+def format_pos(obj):
+    lon = obj.lon % 360
+    deg = int(lon)
+    minutes_float = (lon - deg) * 60
+    min = int(minutes_float)
+    sec = int((minutes_float - min) * 60)
+    retro = " ℞" if obj.isRetrograde() else ""
+    return f"{obj.sign} {deg}°{min:02d}′{sec:02d}″{retro}"
+
 def calc_angle(pos1, pos2):
     angle = fabs(pos1 - pos2) % 360
     return min(angle, 360 - angle)
@@ -51,11 +62,11 @@ def create_chart(date_str, time_str):
 
 def classify_score(score):
     if score >= 25:
-        return '🟩 שעה חזקה'
+        return '🟩 יום חזק'
     elif score >= 15:
-        return '🟨 שעה בינונית'
+        return '🟨 יום בינוני'
     else:
-        return '🟥 שעה חלשה'
+        return '🟥 יום חלש'
 
 def send_telegram_message(message):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
@@ -64,50 +75,90 @@ def send_telegram_message(message):
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message, parse_mode='HTML')
 
-def analyze_next_24_hours():
-    now = datetime.datetime.now()
+def estimate_time_for_aspect(angle):
+    base = 12
+    if angle in [0, 180, 120]:
+        return f"11:00–14:00"
+    elif angle in [60, 150]:
+        return f"11:00–13:00"
+    elif angle == 90:
+        return f"10:00–12:00"
+    return f"11:00–14:00"
+
+def analyze_today():
+    today = datetime.date.today().strftime('%Y/%m/%d')
+    message = f"📆 <b>תחזית אסטרולוגית יומית – {today}</b>\n"
+    message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n🕰️ בדיקת שעות מזל בין {START_HOUR}:00–{END_HOUR}:00\n\n"
+
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
+    transit_now = create_chart(today, '12:00')
 
-    message = f"📆 <b>תחזית 24 שעות הקרובות – {now.strftime('%d/%m/%Y %H:%M')}</b>\n"
-    message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n\n"
+    message += "🌌 <b>כוכבי לידה מול טרנזיט:</b>\n"
+    found_aspect = False
+    for p1 in PLANETS:
+        obj1 = birth_chart.get(p1)
+        pos1 = obj1.lon
+        for p2 in PLANETS:
+            obj2 = transit_now.get(p2)
+            pos2 = obj2.lon
+            angle = calc_angle(pos1, pos2)
+            for target_angle in HARMONIC_ANGLES + CHALLENGING_ANGLES:
+                if abs(angle - target_angle) <= 6:
+                    found_aspect = True
+                    if target_angle in HARMONIC_ANGLES:
+                        symbol = "✅"
+                    elif target_angle == 150:
+                        symbol = "⚠️"
+                    elif target_angle == 90:
+                        symbol = "❌"
+                    else:
+                        symbol = ""
+                    meaning = ASPECT_MEANINGS.get(target_angle, "")
+                    time_est = estimate_time_for_aspect(target_angle)
+                    message += (f"🔹 <b>{p1}</b> {format_pos(obj1)} ↔ <b>{p2}</b> {format_pos(obj2)} — "
+                                f"{int(angle)}° {symbol}\n"
+                                f"• {meaning} | 🕒 {time_est}\n")
+                    break
+    if not found_aspect:
+        message += "• לא נמצאו זוויות בולטות היום.\n"
+    message += "\n"
 
+    retro_birth = [p for p in PLANETS if is_retrograde(birth_chart, p)]
+    retro_today = [p for p in PLANETS if is_retrograde(transit_now, p)]
+    message += "🔁 <b>כוכבים בנסיגה:</b>\n"
+    message += f"• בלידה: {', '.join([p + ' ℞' for p in retro_birth]) or 'ללא'}\n"
+    message += f"• היום: {', '.join([p + ' ℞' for p in retro_today]) or 'ללא'}\n"
+    common = set(retro_birth) & set(retro_today)
+    if common:
+        message += f"✅ <i>השפעה חיובית אפשרית: {', '.join(common)}</i>\n\n"
+    else:
+        message += "\n"
+
+    message += "🕰️ <b>שעות מזל מומלצות:</b>\n"
     lucky_times = []
-
-    current_dt = now.replace(minute=0, second=0, microsecond=0)
-    end_dt = current_dt + datetime.timedelta(hours=DURATION_HOURS)
-
-    while current_dt <= end_dt:
-        date_str = current_dt.strftime('%Y/%m/%d')
-        time_str = current_dt.strftime('%H:%M')
-        transit = create_chart(date_str, time_str)
-
+    for hour in range(START_HOUR, END_HOUR + 1, INTERVAL):
+        h_str = f"{hour:02d}:00"
+        transit = create_chart(today, h_str)
         score = 0
-        details = ""
-
         for p1 in PLANETS:
             for p2 in PLANETS:
                 angle = calc_angle(birth_chart.get(p1).lon, transit.get(p2).lon)
-                for target in HARMONIC_ANGLES:
-                    if abs(angle - target) <= 6:
-                        score += 1
-                        break  # סופר רק זווית אחת בין כל זוג כוכבים
-
+                if any(abs(angle - a) <= 6 for a in HARMONIC_ANGLES):
+                    score += 1
         level = classify_score(score)
-        message += f"• {date_str} {time_str} – {level} ({score} נק')\n"
+        message += f"• {h_str} – {level} ({score} נק')\n"
         if score >= 15:
-            lucky_times.append((current_dt, score))
-
-        current_dt += datetime.timedelta(hours=INTERVAL)
+            lucky_times.append((hour, score))
 
     if lucky_times:
-        message += "\n🎯 <b>שעות מומלצות למילוי לוטו:</b>\n"
-        for dt, score in sorted(lucky_times, key=lambda x: -x[1]):
-            end_time = dt + datetime.timedelta(hours=INTERVAL)
-            message += f"{dt.strftime('%d/%m %H:%M')}–{end_time.strftime('%H:%M')} 🟢 ({score} נק')\n"
+        message += "\n🎯 <b>מומלץ למלא לוטו בין:</b>\n"
+        for t, s in sorted(lucky_times, key=lambda x: -x[1]):
+            end_h = min(t + INTERVAL, END_HOUR)
+            message += f"<b>{t:02d}:00–{end_h:02d}:00</b> 🟢\n"
     else:
-        message += "\n❌ לא נמצאו שעות מזל חזקות ב־24 השעות הקרובות.\n"
+        message += "\n❌ אין שעות מזל חזקות היום.\n"
 
     send_telegram_message(message)
 
 if __name__ == "__main__":
-    analyze_next_24_hours()
+    analyze_today()
