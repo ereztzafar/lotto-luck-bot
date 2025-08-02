@@ -90,6 +90,7 @@ def analyze_today():
     message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n🕰️ שעות נבדקות: {START_HOUR}:00–{END_HOUR}:00\n\n"
 
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
+    today = datetime.datetime.now().strftime('%Y/%m/%d')
     transit_noon = create_chart(today, '12:00')
 
     # === זוויות בין לידה לטרנזיט ===
