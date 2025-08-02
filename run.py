@@ -128,7 +128,7 @@ def analyze_today():
     # === שעות מזל ===
     message += "🕰️ <b>שעות מזל:</b>\n"
     lucky_hours = []
-    for hour in range(0, 24):
+    for hour in range(0, 12):
         time_str = f"{hour:02d}:00"
         transit_chart = create_chart(today, time_str)
         score = 0
