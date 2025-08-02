@@ -3,7 +3,7 @@ import os
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
-from flatlib import const, aspects
+from flatlib import const
 from math import fabs
 import telegram
 
@@ -80,6 +80,7 @@ def analyze_today():
 
     # ---------- כוכבי לידה מול טרנזיט ----------
     message += "🌌 <b>כוכבי לידה מול טרנזיט:</b>\n<pre>"
+    found_aspect = False
     for p1 in PLANETS:
         obj1 = birth_chart.get(p1)
         pos1 = obj1.lon
@@ -88,6 +89,7 @@ def analyze_today():
             pos2 = obj2.lon
             angle = calc_angle(pos1, pos2)
             if any(abs(angle - a) <= 6 for a in HARMONIC_ANGLES + CHALLENGING_ANGLES):
+                found_aspect = True
                 if angle in HARMONIC_ANGLES:
                     symbol = "✅"
                 elif angle in CHALLENGING_ANGLES:
@@ -95,6 +97,8 @@ def analyze_today():
                 else:
                     continue
                 message += f"• {p1} {format_pos(obj1)} ↔ {p2} {format_pos(obj2)} — {int(angle)}° {symbol}\n"
+    if not found_aspect:
+        message += "לא נמצאו זוויות בולטות היום.\n"
     message += "</pre>\n"
 
     # ---------- נסיגות ----------
