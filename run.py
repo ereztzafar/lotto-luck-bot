@@ -32,14 +32,14 @@ CHALLENGING_ANGLES = [90, 150]
 
 
 def is_retrograde(chart, planet):
-    return chart.get(planet).retrograde
+    return chart.get(planet).isRetrograde()
 
 
 def format_pos(obj):
     deg = int(obj.lon)
     min = int((obj.lon - deg) * 60)
     sec = int(((obj.lon - deg) * 60 - min) * 60)
-    retro = " ℞" if obj.retrograde else ""
+    retro = " ℞" if obj.isRetrograde() else ""
     return f"{obj.sign} {deg}°{min:02d}′{sec:02d}″{retro}"
 
 
