@@ -30,10 +30,18 @@ PLANETS = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
 HARMONIC_ANGLES = [0, 60, 120, 180]
 CHALLENGING_ANGLES = [90, 150]
 
+# ----------- פירושים לזוויות ----------
+ASPECT_MEANINGS = {
+    0: "צמידות – מיקוד ועוצמה חזקה",
+    60: "שישית – הזדמנות חיובית, קלות",
+    90: "ריבוע – אתגר, קונפליקט",
+    120: "משולש – זרימה, הרמוניה",
+    150: "קווינקונקס – חוסר נוחות, התאמה נדרשת",
+    180: "אופוזיציה – מתח בין הפכים"
+}
 
 def is_retrograde(chart, planet):
     return chart.get(planet).isRetrograde()
-
 
 def format_pos(obj):
     lon = obj.lon % 360
@@ -44,16 +52,13 @@ def format_pos(obj):
     retro = " ℞" if obj.isRetrograde() else ""
     return f"{obj.sign} {deg}°{min:02d}′{sec:02d}″{retro}"
 
-
 def calc_angle(pos1, pos2):
     angle = fabs(pos1 - pos2) % 360
     return min(angle, 360 - angle)
 
-
 def create_chart(date_str, time_str):
     dt = Datetime(date_str, time_str, TIMEZONE)
     return Chart(dt, LOCATION, IDs=PLANETS)
-
 
 def classify_score(score):
     if score >= 25:
@@ -63,7 +68,6 @@ def classify_score(score):
     else:
         return '🟥 יום חלש'
 
-
 def send_telegram_message(message):
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         print("❌ חסר TELEGRAM_TOKEN או CHAT_ID")
@@ -71,6 +75,17 @@ def send_telegram_message(message):
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message, parse_mode='HTML')
 
+def estimate_time_for_aspect(angle):
+    # כל זווית מקבלת טווח זמן משוער
+    base = 12  # סביב הצהריים
+    if angle in [0, 180, 120]:
+        return f"{base - 1:02d}:00–{base + 2:02d}:00"
+    elif angle in [60, 150]:
+        return f"{base - 2:02d}:00–{base + 1:02d}:00"
+    elif angle == 90:
+        return f"{base - 3:02d}:00–{base:02d}:00"
+    else:
+        return f"{base - 2:02d}:00–{base + 2:02d}:00"
 
 def analyze_today():
     today = datetime.date.today().strftime('%Y/%m/%d')
@@ -95,11 +110,17 @@ def analyze_today():
                     found_aspect = True
                     if target_angle in HARMONIC_ANGLES:
                         symbol = "✅"
-                    elif target_angle in CHALLENGING_ANGLES:
-                        symbol = "⚠️" if target_angle == 150 else "❌"
+                    elif target_angle == 150:
+                        symbol = "⚠️"
+                    elif target_angle == 90:
+                        symbol = "❌"
                     else:
-                        continue
-                    message += f"🔹 {p1} {format_pos(obj1)} ↔ {p2} {format_pos(obj2)} — {int(angle)}° {symbol}\n"
+                        symbol = ""
+                    meaning = ASPECT_MEANINGS.get(target_angle, "")
+                    time_est = estimate_time_for_aspect(target_angle)
+                    message += (f"🔹 <b>{p1}</b> {format_pos(obj1)} ↔ <b>{p2}</b> {format_pos(obj2)} — "
+                                f"{int(angle)}° {symbol}\n"
+                                f"• {meaning} | 🕒 {time_est}\n")
                     break
     if not found_aspect:
         message += "• לא נמצאו זוויות בולטות היום.\n"
@@ -144,7 +165,6 @@ def analyze_today():
 
     # ---------- שליחה ----------
     send_telegram_message(message)
-
 
 if __name__ == "__main__":
     analyze_today()
