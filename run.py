@@ -96,7 +96,7 @@ def analyze_today():
                     symbol = "⚠️" if angle == 150 else "❌"
                 else:
                     continue
-                message += f"• {p1} {format_pos(obj1)} ↔ {p2} {format_pos(obj2)} — {int(angle)}° {symbol}\n"
+                message += f"🔹 {p1} {format_pos(obj1)} ↔ {p2} {format_pos(obj2)} — {int(angle)}° {symbol}\n"
     if not found_aspect:
         message += "• לא נמצאו זוויות בולטות היום.\n"
     message += "\n"
