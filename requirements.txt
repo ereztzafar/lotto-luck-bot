@@ -3,6 +3,8 @@ flatlib[swisseph]
 requests
 pytz
 ephem
+python-telegram-bot==13.15
+
 
 
 
