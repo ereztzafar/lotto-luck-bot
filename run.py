@@ -20,7 +20,7 @@ LOCATION = GeoPos('32n5', '34e53')  # פתח תקווה
 # === הגדרות סריקה ===
 START_HOUR = 5
 END_HOUR = 23
-INTERVAL = 2
+INTERVAL = 3
 
 # === כוכבים רלוונטיים ===
 PLANETS = [
