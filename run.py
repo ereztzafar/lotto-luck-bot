@@ -106,7 +106,7 @@ def analyze_today():
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
 
     fortune_lon = calculate_part_of_fortune(birth_chart)
-    fortune_sign = angle.sign(fortune_lon)
+    fortune_sign = get_sign(fortune_lon)
     fortune_deg = int(fortune_lon % 30)
     fortune_min = int((fortune_lon % 1) * 60)
 
