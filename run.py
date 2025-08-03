@@ -90,9 +90,15 @@ def send_telegram_message(message):
 def analyze_today():
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.datetime.now(tz)
-    end_time = now + datetime.timedelta(hours=24)
+    current_hour = now.hour
+
     message = f"📆 <b>תחזית אסטרולוגית ל־24 שעות הקרובות – {now.strftime('%Y/%m/%d %H:%M')}</b>\n"
-    message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n🕰️ שעות נבדקות: {START_HOUR}:00–{END_HOUR}:00\n\n"
+    message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
+    message += f"🕰️ שעות נבדקות: {current_hour:02d}:00–{END_HOUR}:00\n\n"
+    
+    for hour in range(current_hour, END_HOUR + 2):
+        # ניתוח אסטרולוגי לכל שעה...
+
 
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
     today = datetime.datetime.now().strftime('%Y/%m/%d')
