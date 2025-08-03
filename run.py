@@ -66,12 +66,6 @@ def classify_score(score):
         return '🟥 יום חלש'
 
 def estimate_time_range(angle):
-    if angle in [0, 120, 180]:
-        return "08:00–14:00"
-    elif angle in [60, 150]:
-        return "08:00–14:00"
-    elif angle == 90:
-        return "08:00–14:00"
     return "08:00–14:00"
 
 def send_telegram_message(message):
@@ -95,11 +89,10 @@ def analyze_today():
     message = f"📆 <b>תחזית אסטרולוגית ל־24 שעות הקרובות – {now.strftime('%Y/%m/%d %H:%M')}</b>\n"
     message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
     message += f"🕰️ שעות נבדקות: {current_hour:02d}:00–{END_HOUR}:00\n\n"
-    
-    for hour in range(current_hour, END_HOUR + 1):
-        birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
-        today = datetime.datetime.now().strftime('%Y/%m/%d')
-        transit_noon = create_chart(today, '12:00')
+
+    birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
+    today = datetime.datetime.now().strftime('%Y/%m/%d')
+    transit_noon = create_chart(today, '12:00')
 
     # === זוויות בין לידה לטרנזיט ===
     message += "🌌 <b>זוויות בין כוכבי לידה לטרנזיט:</b>\n"
@@ -134,35 +127,30 @@ def analyze_today():
     message += "\n"
 
     # === שעות מזל ===
- now = datetime.datetime.now()
-start_hour = max(now.hour, 5)  # לא לפני 05:00
-end_hour = 22  # או 23 אם תרצה כולל
+    message += "🕰️ <b>שעות מזל:</b>\n"
+    lucky_hours = []
 
-message += "🕰️ <b>שעות מזל:</b>\n"
-lucky_hours = []
+    for hour in range(max(now.hour, START_HOUR), END_HOUR + 1):
+        time_str = f"{hour:02d}:00"
+        transit_chart = create_chart(today, time_str)
+        score = 0
+        for p1 in PLANETS:
+            for p2 in PLANETS:
+                angle = calc_angle(birth_chart.get(p1).lon, transit_chart.get(p2).lon)
+                if any(abs(angle - h) <= 6 for h in HARMONIC_ANGLES):
+                    score += 1
+        level = classify_score(score)
+        message += f"• {time_str} – {level} ({score} נק')\n"
+        if score >= 15:
+            lucky_hours.append((hour, score))
 
-for hour in range(start_hour, end_hour + 1):
-    time_str = f"{hour:02d}:00"
-    transit_chart = create_chart(today, time_str)
-    score = 0
-    for p1 in PLANETS:
-        for p2 in PLANETS:
-            angle = calc_angle(birth_chart.get(p1).lon, transit_chart.get(p2).lon)
-            if any(abs(angle - h) <= 6 for h in HARMONIC_ANGLES):
-                score += 1
-    level = classify_score(score)
-    message += f"• {time_str} – {level} ({score} נק')\n"
-    if score >= 15:
-        lucky_hours.append((hour, score))
-
-if lucky_hours:
-    message += "\n🎯 <b>המלצות מילוי לוטו:</b>\n"
-    for hour, score in sorted(lucky_hours, key=lambda x: -x[1]):
-        end = min(hour + 2, end_hour)
-        message += f"<b>{hour:02d}:00–{end:02d}:00</b> 🟢 ({score} זוויות חיוביות)\n"
-else:
-    message += "\n❌ אין שעות מזל משמעותיות היום.\n"
-
+    if lucky_hours:
+        message += "\n🎯 <b>המלצות מילוי לוטו:</b>\n"
+        for hour, score in sorted(lucky_hours, key=lambda x: -x[1]):
+            end = min(hour + 2, END_HOUR)
+            message += f"<b>{hour:02d}:00–{end:02d}:00</b> 🟢 ({score} זוויות חיוביות)\n"
+    else:
+        message += "\n❌ אין שעות מזל משמעותיות היום.\n"
 
     # === שליחה ===
     send_telegram_message(message)
