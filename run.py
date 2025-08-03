@@ -111,20 +111,21 @@ def analyze_today():
     current_hour = now.hour
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
 
-    fortune_lon = calculate_part_of_fortune(birth_chart)
-    fortune_sign = get_sign(fortune_lon)
-    fortune_deg = int(fortune_lon % 30)
-    fortune_min = int((fortune_lon % 1) * 60)
+    fortune_birth = calculate_part_of_fortune(birth_chart)
+    fortune_sign = get_sign(fortune_birth)
+    fortune_deg = int(fortune_birth % 30)
+    fortune_min = int((fortune_birth % 1) * 60)
 
     message = f"📆 <b>תחזית אסטרולוגית ל־24 שעות הקרובות – {now.strftime('%Y/%m/%d %H:%M')}</b>\n"
     message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
-    message += f"🌠 <b>פורטונה</b>: {fortune_sign} {fortune_deg}°{fortune_min:02d}′\n"
+    message += f"🌠 <b>פורטונה בלידה</b>: {fortune_sign} {fortune_deg}°{fortune_min:02d}′\n"
     message += f"🕰️ שעות נבדקות: {current_hour:02d}:00–{END_HOUR}:00\n\n"
 
-    today = datetime.datetime.now().strftime('%Y/%m/%d')
+    today = now.strftime('%Y/%m/%d')
     transit_noon = create_chart(today, '12:00')
+    fortune_transit = calculate_part_of_fortune(transit_noon)
 
-    # === זוויות בין לידה לטרנזיט ===
+    # === זוויות בין כוכבי לידה לטרנזיט ===
     message += "🌌 <b>זוויות בין כוכבי לידה לטרנזיט:</b>\n"
     aspects_found = False
     for p1 in PLANETS:
@@ -163,14 +164,29 @@ def analyze_today():
     for hour in range(max(now.hour, START_HOUR), END_HOUR + 1):
         time_str = f"{hour:02d}:00"
         transit_chart = create_chart(today, time_str)
+        fortune_now = calculate_part_of_fortune(transit_chart)
+
         score = 0
-        for p1 in PLANETS:
-            for p2 in PLANETS:
-                ang_val = calc_angle(birth_chart.get(p1).lon, transit_chart.get(p2).lon)
-                if any(abs(ang_val - h) <= 6 for h in HARMONIC_ANGLES):
-                    score += 1
+        highlights = []
+
+        for p1 in PLANETS + ['FORTUNE']:
+            pos1 = birth_chart.get(p1).lon if p1 != 'FORTUNE' else fortune_birth
+            for p2 in PLANETS + ['FORTUNE']:
+                pos2 = transit_chart.get(p2).lon if p2 != 'FORTUNE' else fortune_now
+                ang_val = calc_angle(pos1, pos2)
+                for h_angle in HARMONIC_ANGLES:
+                    if abs(ang_val - h_angle) <= 6:
+                        score += 1
+                        money_tag = '💰' if (p1 in MONEY_OBJECTS or p2 in MONEY_OBJECTS) else ''
+                        fortuna_tag = '🎯' if ('FORTUNE' in [p1, p2]) else ''
+                        highlights.append(f"🔸 {p1} {money_tag}{fortuna_tag} ↔ {p2} {money_tag}{fortuna_tag} – {int(ang_val)}°")
+                        break
+
         level = classify_score(score)
         message += f"• {time_str} – {level} ({score} נק')\n"
+        for line in highlights:
+            message += f"   {line}\n"
+
         if score >= 15:
             lucky_hours.append((hour, score))
 
@@ -182,8 +198,8 @@ def analyze_today():
     else:
         message += "\n❌ אין שעות מזל משמעותיות היום.\n"
 
-    # === שליחה ===
     send_telegram_message(message)
+
 
 if __name__ == '__main__':
     analyze_today()
