@@ -64,9 +64,13 @@ def format_position(obj):
     return f"{obj.sign} {deg}°{minutes:02d}′{retro}"
 
 def calc_angle(pos1, pos2):
-    angle = fabs(pos1 - pos2) % 360
-    return min(angle, 360 - angle)
-
+    ang = fabs(pos1 - pos2) % 360
+    return min(angle, 360 - ang)
+    
+def get_sign(lon):
+    index = int((lon % 360) / 30)
+    return const.SIGNS[index]
+    
 def create_chart(date_str, time_str):
     dt = Datetime(date_str, time_str, TIMEZONE)
     return Chart(dt, LOCATION, IDs=PLANETS)
@@ -121,9 +125,9 @@ def analyze_today():
         obj1 = birth_chart.get(p1)
         for p2 in PLANETS:
             obj2 = transit_noon.get(p2)
-            angle = calc_angle(obj1.lon, obj2.lon)
+            ang = calc_angle(obj1.lon, obj2.lon)
             for target_angle in HARMONIC_ANGLES + CHALLENGING_ANGLES:
-                if abs(angle - target_angle) <= 6:
+                if abs(ang - target_angle) <= 6:
                     symbol = "✅" if target_angle in HARMONIC_ANGLES else "⚠️" if target_angle == 150 else "❌"
                     meaning = ASPECT_MEANINGS.get(target_angle, "")
                     time_range = estimate_time_range(target_angle)
