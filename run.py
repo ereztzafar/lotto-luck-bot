@@ -98,7 +98,7 @@ def send_telegram_message(message):
         return
     try:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        max_length = 4000
+        max_length = 3000
         parts = [message[i:i+max_length] for i in range(0, len(message), max_length)]
         for part in parts:
             bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=part, parse_mode='HTML')
