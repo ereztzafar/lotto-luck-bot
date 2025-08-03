@@ -29,7 +29,7 @@ PLANETS = [
     const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
 ]
-ALL_OBJECTS = PLANETS + [const.FORTUNE]
+ALL_OBJECTS = PLANETS + ['FORTUNE']
 
 # === כוכבים שקשורים לכסף ===
 MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MERCURY, const.MOON, const.PLUTO, const.FORTUNE]
