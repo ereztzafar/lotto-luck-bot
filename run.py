@@ -48,6 +48,12 @@ ASPECT_MEANINGS = {
     180: "אופוזיציה – מתח בין הפכים"
 }
 
+# === מזלות לפי מעלות גלגל המזלות ===
+SIGNS = [
+    'ARIES', 'TAURUS', 'GEMINI', 'CANCER', 'LEO', 'VIRGO',
+    'LIBRA', 'SCORPIO', 'SAGITTARIUS', 'CAPRICORN', 'AQUARIUS', 'PISCES'
+]
+
 def calculate_part_of_fortune(chart):
     # פורטונה ביום: ASC + ירח - שמש
     asc = chart.get(const.ASC).lon
@@ -69,7 +75,7 @@ def calc_angle(pos1, pos2):
 
 def get_sign(lon):
     index = int((lon % 360) / 30)
-    return const.SIGNS[index]
+    return SIGNS[index]
 
 def create_chart(date_str, time_str):
     dt = Datetime(date_str, time_str, TIMEZONE)
