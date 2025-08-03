@@ -3,6 +3,7 @@ import datetime
 import pytz
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
+from flatlib import angle
 from flatlib.geopos import GeoPos
 from flatlib import const
 from flatlib import aspects
@@ -47,6 +48,14 @@ ASPECT_MEANINGS = {
     180: "אופוזיציה – מתח בין הפכים"
 }
 
+def calculate_part_of_fortune(chart):
+    # פורטונה ביום: ASC + ירח - שמש
+    asc = chart.get(const.ASC).lon
+    moon = chart.get(const.MOON).lon
+    sun = chart.get(const.SUN).lon
+    fortune = angle.norm(asc + moon - sun)
+    return fortune
+    
 def format_position(obj):
     lon = obj.lon % 360
     deg = int(lon)
@@ -90,12 +99,18 @@ def analyze_today():
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.datetime.now(tz)
     current_hour = now.hour
-
+    birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
+    
+    ortune_lon = calculate_part_of_fortune(birth_chart)  # ← רק עכשיו לחשב פורטונה
+    fortune_sign = angle.sign(fortune_lon)
+    fortune_deg = int(fortune_lon % 30)
+    fortune_min = int((fortune_lon % 1) * 60)
+        
     message = f"📆 <b>תחזית אסטרולוגית ל־24 שעות הקרובות – {now.strftime('%Y/%m/%d %H:%M')}</b>\n"
     message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
+    message += f"🌠 <b>פורטונה</b>: {fortune_sign} {fortune_deg}°{fortune_min:02d}′\n"
     message += f"🕰️ שעות נבדקות: {current_hour:02d}:00–{END_HOUR}:00\n\n"
-
-    birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
+    
     today = datetime.datetime.now().strftime('%Y/%m/%d')
     transit_noon = create_chart(today, '12:00')
 
