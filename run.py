@@ -5,6 +5,7 @@ from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib import const
+from flatlib import aspects
 from math import fabs
 import telegram
 
@@ -28,6 +29,10 @@ PLANETS = [
     const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
 ]
+ALL_OBJECTS = PLANETS + [const.FORTUNE]
+
+# === כוכבים שקשורים לכסף ===
+MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MERCURY, const.MOON, const.PLUTO, const.FORTUNE]
 
 # === זוויות חשובות ===
 HARMONIC_ANGLES = [0, 60, 120, 180]
@@ -125,7 +130,7 @@ def analyze_today():
     if common:
         message += f"✅ <i>השפעה חוזרת: {', '.join(common)}</i>\n"
     message += "\n"
-
+       
     # === שעות מזל ===
     message += "🕰️ <b>שעות מזל:</b>\n"
     lucky_hours = []
