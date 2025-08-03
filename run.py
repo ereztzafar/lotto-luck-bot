@@ -96,10 +96,10 @@ def analyze_today():
     message += f"🧬 תאריך לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
     message += f"🕰️ שעות נבדקות: {current_hour:02d}:00–{END_HOUR}:00\n\n"
     
-    for hour in range(current_hour, END_HOUR + 2):
-    birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
-    today = datetime.datetime.now().strftime('%Y/%m/%d')
-    transit_noon = create_chart(today, '12:00')
+    for hour in range(current_hour, END_HOUR + 1):
+        birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
+        today = datetime.datetime.now().strftime('%Y/%m/%d')
+        transit_noon = create_chart(today, '12:00')
 
     # === זוויות בין לידה לטרנזיט ===
     message += "🌌 <b>זוויות בין כוכבי לידה לטרנזיט:</b>\n"
