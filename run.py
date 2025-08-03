@@ -32,7 +32,7 @@ PLANETS = [
 ALL_OBJECTS = PLANETS + ['FORTUNE']
 
 # === כוכבים שקשורים לכסף ===
-MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MERCURY, const.MOON, const.PLUTO, const.FORTUNE]
+MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MERCURY, const.MOON, const.PLUTO, 'FORTUNE']
 
 # === זוויות חשובות ===
 HARMONIC_ANGLES = [0, 60, 120, 180]
