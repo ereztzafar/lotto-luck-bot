@@ -37,7 +37,7 @@ MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MERCURY, const.MOON, const.PL
 
 # === זוויות חשובות ===
 HARMONIC_ANGLES = [0, 60, 120, 180]
-CHALLENGING_ANGLES = [90, 150]
+CHALLENGING_ANGLES = []
 
 ASPECT_MEANINGS = {
     0: "צמידות – מיקוד ועוצמה חזקה",
