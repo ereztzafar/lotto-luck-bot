@@ -57,9 +57,10 @@ def get_sign(lon):
 
 def create_chart(date_str, time_str):
     dt = Datetime(date_str, time_str, TIMEZONE)
-    # רק כוכבים נתמכים – בלי ASC
-    money_ids = [obj for obj in MONEY_OBJECTS if obj != 'FORTUNE']
-    return Chart(dt, LOCATION, IDs=money_ids)
+    # ודא ש־Sun כלול
+    essential_ids = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]
+    return Chart(dt, LOCATION, IDs=essential_ids)
+
 
 def classify_score(score):
     if score >= 25:
