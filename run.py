@@ -176,11 +176,12 @@ def analyze_today():
                 for h_angle in HARMONIC_ANGLES:
                     if abs(ang_val - h_angle) <= 4:
                         if p1 in MONEY_OBJECTS and p2 in MONEY_OBJECTS:
-                        score += 1
-                        money_tag = '💰'
-                        fortuna_tag = '🎯' if ('FORTUNE' in [p1, p2]) else ''
-                        highlights.append(f"🔸 {p1} {money_tag}{fortuna_tag} ↔ {p2} {money_tag}{fortuna_tag} – {int(ang_val)}°")
-                        break
+                            score += 1
+                            money_tag = '💰'
+                            fortuna_tag = '🎯' if 'FORTUNE' in [p1, p2] else ''
+                            highlights.append(f"🔸 {p1} {money_tag}{fortuna_tag} ↔ {p2} {money_tag}{fortuna_tag} – {int(ang_val)}°")
+                            break
+
 
 
         level = classify_score(score)
