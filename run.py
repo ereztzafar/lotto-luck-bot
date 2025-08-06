@@ -57,9 +57,10 @@ def get_sign(lon):
 
 def create_chart(date_str, time_str):
     dt = Datetime(date_str, time_str, TIMEZONE)
-    # ודא ש־Sun כלול
-    essential_ids = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS, const.JUPITER, const.SATURN]
-    return Chart(dt, LOCATION, IDs=essential_ids)
+    ids = [const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
+           const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO, const.ASC]
+    return Chart(dt, LOCATION, IDs=ids)
+
 
 
 def classify_score(score):
