@@ -33,7 +33,7 @@ PLANETS = [
 ALL_OBJECTS = PLANETS + ['FORTUNE']
 
 # === כוכבים שקשורים לכסף ===
-MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MERCURY, const.MOON, const.PLUTO, 'FORTUNE']
+MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MERCURY, const.MOON, const.PLUTO,const.URANUS, 'FORTUNE']
 
 # === זוויות חשובות ===
 HARMONIC_ANGLES = [0, 60, 120, 180]
@@ -44,8 +44,7 @@ ASPECT_MEANINGS = {
     60: "שישית – הזדמנות חיובית, קלות",
     90: "ריבוע – אתגר, קונפליקט",
     120: "משולש – זרימה, הרמוניה",
-    150: "קווינקונקס – חוסר נוחות, התאמה נדרשת",
-    180: "אופוזיציה – מתח בין הפכים"
+    
 }
 
 # === מזלות לפי מעלות גלגל המזלות ===
