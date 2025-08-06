@@ -174,12 +174,14 @@ def analyze_today():
                 pos2 = transit_chart.get(p2).lon if p2 != 'FORTUNE' else fortune_now
                 ang_val = calc_angle(pos1, pos2)
                 for h_angle in HARMONIC_ANGLES:
-                    if abs(ang_val - h_angle) <= 6:
+                    if abs(ang_val - h_angle) <= 4:
+                        if p1 in MONEY_OBJECTS and p2 in MONEY_OBJECTS:
                         score += 1
-                        money_tag = '💰' if (p1 in MONEY_OBJECTS or p2 in MONEY_OBJECTS) else ''
+                        money_tag = '💰'
                         fortuna_tag = '🎯' if ('FORTUNE' in [p1, p2]) else ''
                         highlights.append(f"🔸 {p1} {money_tag}{fortuna_tag} ↔ {p2} {money_tag}{fortuna_tag} – {int(ang_val)}°")
                         break
+
 
         level = classify_score(score)
         message += f"• {time_str} – {level} ({score} נק')\n"
