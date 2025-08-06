@@ -133,7 +133,7 @@ def analyze_today():
             obj2 = transit_noon.get(p2)
             angle_val = calc_angle(obj1.lon, obj2.lon)
             for target_angle in HARMONIC_ANGLES + CHALLENGING_ANGLES:
-                if abs(angle_val - target_angle) <= 4:
+                if abs(angle_val - target_angle) <= 6:
                     symbol = "✅" if target_angle in HARMONIC_ANGLES else "⚠️" if target_angle == 150 else "❌"
                     meaning = ASPECT_MEANINGS.get(target_angle, "")
                     time_range = estimate_time_range(target_angle)
