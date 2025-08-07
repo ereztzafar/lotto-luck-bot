@@ -44,7 +44,6 @@ ASPECT_MEANINGS = {
     60: "שישית – הזדמנות חיובית, קלות",
     90: "ריבוע – אתגר, קונפליקט",
     120: "משולש – זרימה, הרמוניה",
-    
 }
 
 # === מזלות לפי מעלות גלגל המזלות ===
@@ -108,6 +107,12 @@ def analyze_today():
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.datetime.now(tz)
     current_hour = now.hour
+
+    # 🛑 אל תשלח הודעה אם השעה בישראל מאוחרת מדי
+    if current_hour >= 22:
+        print("⏳ השעה מאוחרת מדי – לא נשלחת תחזית.")
+        return
+
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
 
     fortune_birth = calculate_part_of_fortune(birth_chart)
@@ -181,8 +186,6 @@ def analyze_today():
                             fortuna_tag = '🎯' if 'FORTUNE' in [p1, p2] else ''
                             highlights.append(f"🔸 {p1} {money_tag}{fortuna_tag} ↔ {p2} {money_tag}{fortuna_tag} – {int(ang_val)}°")
                             break
-
-
 
         level = classify_score(score)
         message += f"• {time_str} – {level} ({score} נק')\n"
