@@ -75,7 +75,7 @@ def find_lucky_hours(date_obj, birth_chart, fortune_birth):
                 pos2 = transit_chart.get(p2).lon if p2 != 'FORTUNE' else fortune_now
                 ang_val = calc_angle(pos1, pos2)
                 for h_angle in HARMONIC_ANGLES:
-                    if abs(ang_val - h_angle) <= 2:
+                    if abs(ang_val - h_angle) <= 1:
                         icon1 = PLANET_ICONS.get(p1, p1)
                         icon2 = PLANET_ICONS.get(p2, p2)
                         meaning = ANGLE_MEANINGS.get(h_angle, "")
