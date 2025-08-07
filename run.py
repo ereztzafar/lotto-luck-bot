@@ -133,7 +133,7 @@ def analyze_today():
             obj2 = transit_noon.get(p2)
             angle_val = calc_angle(obj1.lon, obj2.lon)
             for target_angle in HARMONIC_ANGLES + CHALLENGING_ANGLES:
-                if abs(angle_val - target_angle) <= 8:
+                if abs(angle_val - target_angle) <= 4:
                     symbol = "✅" if target_angle in HARMONIC_ANGLES else "⚠️" if target_angle == 150 else "❌"
                     meaning = ASPECT_MEANINGS.get(target_angle, "")
                     time_range = estimate_time_range(target_angle)
@@ -174,7 +174,7 @@ def analyze_today():
                 pos2 = transit_chart.get(p2).lon if p2 != 'FORTUNE' else fortune_now
                 ang_val = calc_angle(pos1, pos2)
                 for h_angle in HARMONIC_ANGLES:
-                    if abs(ang_val - h_angle) <= 8:
+                    if abs(ang_val - h_angle) <= 4:
                         if p1 in MONEY_OBJECTS and p2 in MONEY_OBJECTS:
                             score += 1
                             money_tag = '💰'
