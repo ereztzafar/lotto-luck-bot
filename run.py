@@ -5,7 +5,11 @@ from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib import const, angle
 import pytz
-import pandas as pd
+import telegram
+
+# === טלגרם ===
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # === פרטי לידה ===
 BIRTH_DATE = '1970/11/22'
@@ -13,7 +17,7 @@ BIRTH_TIME = '06:00'
 TIMEZONE = '+02:00'
 LOCATION = GeoPos('32n5', '34e53')  # פתח תקווה
 
-# === כוכבים רלוונטיים ===
+# === כוכבים והשפעות ===
 PLANETS = [
     const.SUN, const.MOON, const.MERCURY, const.VENUS, const.MARS,
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
@@ -22,11 +26,12 @@ ALL_OBJECTS = PLANETS + ['FORTUNE']
 MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MOON, const.PLUTO, 'FORTUNE']
 HARMONIC_ANGLES = [0, 60, 120, 180]
 
-# === שעות לבדיקה ביום ===
+# === הגדרות זמן סריקה בכל יום ===
 START_HOUR = 5
 END_HOUR = 23
 INTERVAL = 3
 
+# === חישובי עזר ===
 def calculate_part_of_fortune(chart):
     asc = chart.get(const.ASC).lon
     moon = chart.get(const.MOON).lon
@@ -51,6 +56,7 @@ def classify_score(score):
     else:
         return '⬜ חלש מאוד'
 
+# === חישוב שעות מזל ליום מסוים ===
 def find_lucky_hours_for_day(date_obj, birth_chart, fortune_birth):
     date_str = date_obj.strftime('%Y/%m/%d')
     lucky_hours = []
@@ -72,49 +78,47 @@ def find_lucky_hours_for_day(date_obj, birth_chart, fortune_birth):
                             score += 1
 
         if score >= 1:
-            lucky_hours.append({
-                'שעה': time_str,
-                'רמה': classify_score(score),
-                'זוויות': score
-            })
+            lucky_hours.append(f"{time_str} – {classify_score(score)} ({score} זוויות)")
 
     return lucky_hours
 
-def forecast_30_days():
-    base_date = datetime.now(pytz.timezone("Asia/Jerusalem"))
+# === שליחת הודעה לטלגרם ===
+def send_telegram(message):
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        print("❌ חסרים TELEGRAM_TOKEN או CHAT_ID בסביבה")
+        return
+    try:
+        bot = telegram.Bot(token=TELEGRAM_TOKEN)
+        chunks = [message[i:i+4000] for i in range(0, len(message), 4000)]
+        for part in chunks:
+            bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=part, parse_mode='HTML')
+    except Exception as e:
+        print(f"שגיאה בשליחה לטלגרם: {e}")
+
+# === תחזית 30 ימים ===
+def forecast_and_send():
+    now = datetime.now(pytz.timezone("Asia/Jerusalem"))
+    base_date = now
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
     fortune_birth = calculate_part_of_fortune(birth_chart)
-    days = []
+
+    message = f"📆 <b>תחזית שעות מזל ל־30 הימים הקרובים</b>\n"
+    message += f"🧬 לפי מפת לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
+    message += f"🎯 כל שעה שבה אפילו כוכב אחד תומך בלוטו – תוצג כאן.\n\n"
 
     for i in range(30):
         day = base_date + timedelta(days=i)
-        lucky = find_lucky_hours_for_day(day, birth_chart, fortune_birth)
-        days.append({
-            'תאריך': day.strftime('%Y-%m-%d'),
-            'שעות מזל': lucky if lucky else '❌ ללא שעות טובות'
-        })
-    return days
-
-# הפעלת התחזית
-if __name__ == '__main__':
-    forecast_result = forecast_30_days()
-    rows = []
-    for day in forecast_result:
-        if isinstance(day['שעות מזל'], str):
-            rows.append({
-                'תאריך': day['תאריך'],
-                'שעה': '',
-                'רמה': day['שעות מזל'],
-                'מספר זוויות': ''
-            })
+        lucky_hours = find_lucky_hours_for_day(day, birth_chart, fortune_birth)
+        message += f"📅 <b>{day.strftime('%Y-%m-%d')}</b>\n"
+        if lucky_hours:
+            for hour in lucky_hours:
+                message += f"• {hour}\n"
         else:
-            for item in day['שעות מזל']:
-                rows.append({
-                    'תאריך': day['תאריך'],
-                    'שעה': item['שעה'],
-                    'רמה': item['רמה'],
-                    'מספר זוויות': item['זוויות']
-                })
-    df = pd.DataFrame(rows)
-    df.to_excel("lucky_hours_30_days.xlsx", index=False)
-    print("✅ נשמר הקובץ: lucky_hours_30_days.xlsx")
+            message += "❌ ללא שעות טובות\n"
+        message += "\n"
+
+    send_telegram(message)
+
+# === הפעלה
+if __name__ == '__main__':
+    forecast_and_send()
