@@ -59,6 +59,20 @@ def calc_angle(pos1, pos2):
     diff = abs(pos1 - pos2) % 360
     return min(diff, 360 - diff)
 
+def estimate_potential_score(n):
+    if n >= 9:
+        return "🟢🟢 95–100%"
+    elif n >= 7:
+        return "🟢 85–94%"
+    elif n >= 5:
+        return "🟢 70–84%"
+    elif n >= 3:
+        return "🟡 50–69%"
+    elif n >= 1:
+        return "🔘 30–49%"
+    else:
+        return "⬜ 0%"
+
 def find_lucky_hours(date_obj, birth_chart, fortune_birth):
     date_str = date_obj.strftime('%Y/%m/%d')
     lucky_blocks = []
@@ -105,11 +119,11 @@ def build_and_send_forecast():
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
     fortune_birth = calculate_part_of_fortune(birth_chart)
 
-    message = f"📆 <b>תחזית לוטו אסטרולוגית – 30 הימים הקרובים 🎟️</b>\n"
+    message = f"📆 <b>תחזית לוטו אסטרולוגית – 3 הימים הקרובים 🎟️</b>\n"
     message += f"🧬 לפי מפת לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
-    message += f"🎯 שעות מזל כספי נבחרות בלבד מוצגות להלן:\n\n"
+    message += f"🎯 שעות מזל כספי מוצגות לפי זוויות בין כוכבי לידה לטרנזיט:\n\n"
 
-    for i in range(30):
+    for i in range(3):  # רק שלושה ימים
         day = now + timedelta(days=i)
         date_str = day.strftime('%Y-%m-%d')
         message += f"📅 <b>{date_str}</b>\n"
@@ -118,12 +132,14 @@ def build_and_send_forecast():
             message += "❌ אין שעות מזל לוטו ביום זה.\n\n"
             continue
         for block in lucky_hours:
-            message += f"🕐 <b>{block['שעה']}</b> – 💰 פוטנציאל זכייה:\n"
+            num_aspects = len(block['זוויות'])
+            percent = estimate_potential_score(num_aspects)
+            message += f"🕐 <b>{block['שעה']}</b> – 💰 פוטנציאל זכייה: {percent}\n"
             for asp in block['זוויות']:
                 message += f"• {asp}\n"
             message += "\n"
         best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
-        message += f"🟢 <i>המלצה: נסה למלא לוטו סביב {best}</i>\n\n"
+        message += f"🟢 <i>המלצה: למלא לוטו סביב {best}</i>\n\n"
 
     send_telegram_message(message)
 
