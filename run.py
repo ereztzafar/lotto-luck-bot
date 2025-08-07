@@ -122,7 +122,7 @@ def build_and_send_forecast():
             for asp in block['זוויות']:
                 message += f"• {asp}\n"
             message += "\n"
-        best = lucky_hours[0]['שעה']
+        best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
         message += f"🟢 <i>המלצה: נסה למלא לוטו סביב {best}</i>\n\n"
 
     send_telegram_message(message)
