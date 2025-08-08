@@ -74,7 +74,7 @@ def estimate_potential_score(n):
         return "⬜ 0%"
 
 def find_lucky_hours(date_obj, birth_chart, fortune_birth):
-    date_str = date_obj.strftime('%Y/%m/%d')
+    date_str = day.strftime('%Y/%m/%d')
     lucky_blocks = []
 
     for hour in range(START_HOUR, END_HOUR + 1, INTERVAL):
