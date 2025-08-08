@@ -153,7 +153,7 @@ def build_and_send_forecast():
             message += "\n"
 
         best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
-        message += f"🟢 <i>המלצה: למלא לוטו סביב {best}</i>\n\n"
+        message += f"🟢 <i>המלצה: למלא לוטו,חישגד,צ'אנס סביב {best}</i>\n\n"
 
     send_telegram_message(message)
 
