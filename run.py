@@ -123,10 +123,25 @@ def build_and_send_forecast():
     message += f"🧬 לפי מפת לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
     message += f"🎯 שעות מזל כספי מוצגות לפי זוויות בין כוכבי לידה לטרנזיט:\n\n"
 
-    for i in range(3):  # רק שלושה ימים
+    for i in range(3):
         day = now + timedelta(days=i)
         date_str = day.strftime('%Y-%m-%d')
         message += f"📅 <b>{date_str}</b>\n"
+
+        # 🔁 זיהוי כוכבים בנסיגה (טרנזיט)
+        transit_chart_noon = create_chart(date_str, '12:00')
+        retro_now = []
+        for p in PLANETS:
+            if transit_chart_noon.get(p).isRetrograde():
+                retro_now.append(p)
+        if retro_now:
+            icons = [f"{PLANET_ICONS[p]} {p} ℞" for p in retro_now]
+            message += f"🔁 <b>כוכבים בנסיגה:</b> " + ", ".join(icons) + "\n"
+            if len(retro_now) >= 4:
+                message += f"⚠️ <i>המלצה: לנקוט זהירות – השפעת נסיגות מרובה</i>\n"
+        message += "\n"
+
+        # ⏱ שעות מזל
         lucky_hours = find_lucky_hours(day, birth_chart, fortune_birth)
         if not lucky_hours:
             message += "❌ אין שעות מזל לוטו ביום זה.\n\n"
@@ -138,6 +153,7 @@ def build_and_send_forecast():
             for asp in block['זוויות']:
                 message += f"• {asp}\n"
             message += "\n"
+
         best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
         message += f"🟢 <i>המלצה: למלא לוטו סביב {best}</i>\n\n"
 
