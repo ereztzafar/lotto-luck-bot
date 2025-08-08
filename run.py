@@ -125,7 +125,7 @@ def build_and_send_forecast():
 
     for i in range(3):
         day = now + timedelta(days=i)
-        date_str = day.strftime('%Y-%m-%d')
+        date_str = day.strftime('%Y/%m/%d')  # ← פורמט חוקי ל-flatlib
         message += f"📅 <b>{date_str}</b>\n"
 
         # 🔁 זיהוי כוכבים בנסיגה (טרנזיט)
