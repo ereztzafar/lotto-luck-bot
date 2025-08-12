@@ -101,17 +101,65 @@ def find_lucky_hours(date_obj, birth_chart, fortune_birth):
             })
     return lucky_blocks
 
-def send_telegram_message(text):
+def send_telegram_message(message: str):
+    """שליחה בטוחה לטלגרם:
+    - חיתוך לפי בתים (UTF-8) עד ~4000
+    - בלי parse_mode כדי לא לשבור תגיות
+    - נפילה חכמה לשליחת קובץ אם עדיין ארוך מדי
+    """
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         print("❌ חסר TELEGRAM_TOKEN או CHAT_ID")
         return
+
+    import io
+    MAX_BYTES = 4000  # שמרני (4096 הוא המקסימום של טלגרם)
+
+    def chunk_by_bytes(text: str, max_bytes: int):
+        parts, buf = [], bytearray()
+        for line in text.splitlines(True):  # כולל התו \n
+            b = line.encode("utf-8")
+            if len(b) > max_bytes:
+                # חותכים גם שורה בודדת אם היא לבדה חורגת
+                start = 0
+                while start < len(b):
+                    room = max_bytes - len(buf)
+                    if room == 0:
+                        parts.append(buf.decode("utf-8", "ignore"))
+                        buf = bytearray()
+                        room = max_bytes
+                    take = min(room, len(b) - start)
+                    buf.extend(b[start:start+take])
+                    start += take
+                    if len(buf) == max_bytes:
+                        parts.append(buf.decode("utf-8", "ignore"))
+                        buf = bytearray()
+            else:
+                if len(buf) + len(b) > max_bytes:
+                    parts.append(buf.decode("utf-8", "ignore"))
+                    buf = bytearray()
+                buf.extend(b)
+        if buf:
+            parts.append(buf.decode("utf-8", "ignore"))
+        return parts
+
     try:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        parts = [text[i:i+4500] for i in range(0, len(text), 4500)]
-        for part in parts:
-            bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=part, parse_mode='HTML')
+        for part in chunk_by_bytes(message, MAX_BYTES):
+            # בלי parse_mode כדי להימנע משגיאת entities כשהמקטע נחתך
+            bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=part)
     except Exception as e:
-        print(f"שגיאת טלגרם: {e}")
+        print(f"שגיאת טלגרם בעת שליחה מפוצלת: {e}. שולח כקובץ…")
+        try:
+            bio = io.BytesIO(message.encode("utf-8"))
+            bio.name = "forecast.txt"
+            telegram.Bot(token=TELEGRAM_TOKEN).send_document(
+                chat_id=TELEGRAM_CHAT_ID,
+                document=bio,
+                caption="ההודעה הייתה ארוכה – נשלחה כקובץ"
+            )
+        except Exception as ee:
+            print(f"שגיאת טלגרם גם בשליחת קובץ: {ee}")
+
 
 def build_and_send_forecast():
     tz = pytz.timezone("Asia/Jerusalem")
