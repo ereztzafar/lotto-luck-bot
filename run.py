@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime, timedelta
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
@@ -101,65 +102,61 @@ def find_lucky_hours(date_obj, birth_chart, fortune_birth):
             })
     return lucky_blocks
 
-def send_telegram_message(message: str):
-    """שליחה בטוחה לטלגרם:
-    - חיתוך לפי בתים (UTF-8) עד ~4000
-    - בלי parse_mode כדי לא לשבור תגיות
-    - נפילה חכמה לשליחת קובץ אם עדיין ארוך מדי
+# =========================
+#  שליחה בטוחה ל-HTML
+# =========================
+def _split_html_safe(text: str, max_bytes: int = 3900):
+    """מפצל טקסט לקטעים בטוחים ל-HTML:
+    לא שובר תגיות <b>/<i>/<u>/<code>, סוגר אותן בסוף חלק ופותח מחדש בחלק הבא.
     """
+    parts = []
+    open_tags = []   # נעקוב אחרי סדר פתיחת תגיות
+    buf = ''
+
+    def update_stack(stack, seg):
+        for m in re.finditer(r'<(/?)(b|i|u|code)>', seg):
+            closing, tag = m.group(1) == '/', m.group(2)
+            if closing:
+                if tag in stack:
+                    idx = len(stack) - 1 - stack[::-1].index(tag)
+                    stack = stack[:idx] + stack[idx+1:]
+            else:
+                stack.append(tag)
+        return stack
+
+    for line in text.splitlines(True):  # שומר \n
+        candidate = buf + line
+        if len(candidate.encode('utf-8')) <= max_bytes:
+            buf = candidate
+        else:
+            # סגור תגיות פתוחות בסוף החלק
+            closed = buf + ''.join(f'</{t}>' for t in reversed(open_tags))
+            parts.append(closed)
+            # פתח שוב בתחילת החלק הבא
+            buf = ''.join(f'<{t}>' for t in open_tags) + line
+        open_tags = update_stack(open_tags, line)
+
+    if buf:
+        closed = buf + ''.join(f'</{t}>' for t in reversed(open_tags))
+        parts.append(closed)
+    return parts
+
+def send_telegram_message(message: str):
+    """שולח הודעה מפוצלת בבטחה כ-HTML, ללא שבירת תגיות וללא חריגה מהמגבלת בתים."""
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         print("❌ חסר TELEGRAM_TOKEN או CHAT_ID")
         return
-
-    import io
-    MAX_BYTES = 4000  # שמרני (4096 הוא המקסימום של טלגרם)
-
-    def chunk_by_bytes(text: str, max_bytes: int):
-        parts, buf = [], bytearray()
-        for line in text.splitlines(True):  # כולל התו \n
-            b = line.encode("utf-8")
-            if len(b) > max_bytes:
-                # חותכים גם שורה בודדת אם היא לבדה חורגת
-                start = 0
-                while start < len(b):
-                    room = max_bytes - len(buf)
-                    if room == 0:
-                        parts.append(buf.decode("utf-8", "ignore"))
-                        buf = bytearray()
-                        room = max_bytes
-                    take = min(room, len(b) - start)
-                    buf.extend(b[start:start+take])
-                    start += take
-                    if len(buf) == max_bytes:
-                        parts.append(buf.decode("utf-8", "ignore"))
-                        buf = bytearray()
-            else:
-                if len(buf) + len(b) > max_bytes:
-                    parts.append(buf.decode("utf-8", "ignore"))
-                    buf = bytearray()
-                buf.extend(b)
-        if buf:
-            parts.append(buf.decode("utf-8", "ignore"))
-        return parts
-
     try:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        for part in chunk_by_bytes(message, MAX_BYTES):
-            # בלי parse_mode כדי להימנע משגיאת entities כשהמקטע נחתך
-            bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=part)
-    except Exception as e:
-        print(f"שגיאת טלגרם בעת שליחה מפוצלת: {e}. שולח כקובץ…")
-        try:
-            bio = io.BytesIO(message.encode("utf-8"))
-            bio.name = "forecast.txt"
-            telegram.Bot(token=TELEGRAM_TOKEN).send_document(
+        for part in _split_html_safe(message, max_bytes=3900):
+            bot.send_message(
                 chat_id=TELEGRAM_CHAT_ID,
-                document=bio,
-                caption="ההודעה הייתה ארוכה – נשלחה כקובץ"
+                text=part,
+                parse_mode='HTML',
+                disable_web_page_preview=True
             )
-        except Exception as ee:
-            print(f"שגיאת טלגרם גם בשליחת קובץ: {ee}")
-
+    except Exception as e:
+        print(f"שגיאת טלגרם: {e}")
 
 def build_and_send_forecast():
     tz = pytz.timezone("Asia/Jerusalem")
@@ -177,10 +174,7 @@ def build_and_send_forecast():
         message += f"📅 <b>{date_str}</b>\n"
 
         transit_chart_noon = create_chart(date_str, '12:00')
-        retro_now = []
-        for p in PLANETS:
-            if transit_chart_noon.get(p).isRetrograde():
-                retro_now.append(p)
+        retro_now = [p for p in PLANETS if transit_chart_noon.get(p).isRetrograde()]
         if retro_now:
             icons = [f"{PLANET_ICONS[p]} {p} ℞" for p in retro_now]
             message += f"🔁 <b>כוכבים בנסיגה:</b> " + ", ".join(icons) + "\n"
@@ -192,6 +186,7 @@ def build_and_send_forecast():
         if not lucky_hours:
             message += "❌ אין שעות מזל לוטו ביום זה.\n\n"
             continue
+
         for block in lucky_hours:
             num_aspects = len(block['זוויות'])
             percent = estimate_potential_score(num_aspects)
@@ -201,7 +196,7 @@ def build_and_send_forecast():
             message += "\n"
 
         best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
-        message += f"🟢 <i>המלצה: למלא לוטו,חישגד,צ'אנס סביב {best}</i>\n\n"
+        message += f"🟢 <i>המלצה: למלא לוטו, חישגד או צ'אנס סביב {best}</i>\n\n"
 
     send_telegram_message(message)
 
