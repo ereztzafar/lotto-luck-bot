@@ -107,7 +107,7 @@ def send_telegram_message(text):
         return
     try:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        parts = [text[i:i+4000] for i in range(0, len(text), 4000)]
+        parts = [text[i:i+4500] for i in range(0, len(text), 4500)]
         for part in parts:
             bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=part, parse_mode='HTML')
     except Exception as e:
