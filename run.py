@@ -16,7 +16,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 TIMEZONE = '+02:00'
-LOCATION = GeoPos('32n5', '34e53')  # תל אביב
+LOCATION = GeoPos('32n5', '34e53')  #פתח תקוה
 
 # === כוכבים רלוונטיים למזל פיננסי ===
 PLANETS = [
