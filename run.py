@@ -13,7 +13,7 @@ TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # === פרטי לידה שלך ===
-BIRTH_DATE = '1973/10/18'
+BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 TIMEZONE = '+02:00'
 LOCATION = GeoPos('32n5', '34e53')  # תל אביב
