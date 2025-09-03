@@ -28,9 +28,9 @@ MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MOON, const.PLUTO, 'FORTUNE']
 HARMONIC_ANGLES = [0, 60, 120, 180]
 
 # === טווח שעות כל יום ===
-START_HOUR = 5
-END_HOUR = 23
-INTERVAL = 3
+START_HOUR = 1
+END_HOUR = 24
+INTERVAL = 6
 
 # === מיפוי סמלים לכוכבים ===
 PLANET_ICONS = {
