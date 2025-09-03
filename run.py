@@ -30,7 +30,7 @@ HARMONIC_ANGLES = [0, 60, 120, 180]
 # === טווח שעות כל יום ===
 START_HOUR = 1
 END_HOUR = 24
-INTERVAL = 6
+INTERVAL = 3
 
 # === מיפוי סמלים לכוכבים ===
 PLANET_ICONS = {
