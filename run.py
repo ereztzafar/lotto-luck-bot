@@ -158,6 +158,80 @@ def send_telegram_message(message: str):
     except Exception as e:
         print(f"שגיאת טלגרם: {e}")
 
+# =========================
+#  תוספת: 30 יום קדימה רק 95%-100%
+# =========================
+def _count_money_aspects_for_datetime(birth_chart, fortune_birth, date_str, time_str, orb_deg=3):
+    """סופר זוויות בין MONEY_OBJECTS (לידה) לבין MONEY_OBJECTS (טרנזיט) בזמן נתון."""
+    transit_chart = create_chart(date_str, time_str)
+    fortune_now = calculate_part_of_fortune(transit_chart)
+
+    count = 0
+    for p1 in MONEY_OBJECTS:
+        pos1 = birth_chart.get(p1).lon if p1 != 'FORTUNE' else fortune_birth
+        for p2 in MONEY_OBJECTS:
+            pos2 = transit_chart.get(p2).lon if p2 != 'FORTUNE' else fortune_now
+            ang_val = calc_angle(pos1, pos2)
+            for h_angle in HARMONIC_ANGLES:
+                if abs(ang_val - h_angle) <= orb_deg:
+                    count += 1
+    return count
+
+def _dedupe_times_keep_max(times_with_counts, merge_minutes=60):
+    """מאחד זמנים סמוכים (≤ merge_minutes) ושומר את הגבוה."""
+    if not times_with_counts:
+        return []
+    times_with_counts.sort(key=lambda x: x[0])
+    merged = [times_with_counts[0]]
+    for dt, cnt in times_with_counts[1:]:
+        last_dt, last_cnt = merged[-1]
+        if abs((dt - last_dt).total_seconds()) <= merge_minutes * 60:
+            if cnt > last_cnt:
+                merged[-1] = (dt, cnt)
+        else:
+            merged.append((dt, cnt))
+    return merged
+
+def find_30d_windows_95_only(step_minutes=30, dedupe_minutes=60):
+    """
+    סורק 30 יום קדימה (ברזולוציית חצי שעה) ומחזיר את כל הזמנים שמגיעים לרף 95%-100%,
+    כלומר ≥9 זוויות תואמות (לפי estimate_potential_score).
+    """
+    tz = pytz.timezone("Asia/Jerusalem")
+    now = datetime.now(tz).replace(second=0, microsecond=0)
+    end = now + timedelta(days=30)
+
+    birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
+    fortune_birth = calculate_part_of_fortune(birth_chart)
+
+    hits = []
+    t = now
+    while t <= end:
+        date_str = t.strftime('%Y/%m/%d')
+        time_str = t.strftime('%H:%M')
+        n_aspects = _count_money_aspects_for_datetime(
+            birth_chart, fortune_birth, date_str, time_str, orb_deg=3
+        )
+        # ע״פ הסולם: n>=9 → "🟢🟢 95–100%"
+        if n_aspects >= 9:
+            hits.append((t, n_aspects))
+        t += timedelta(minutes=step_minutes)
+
+    hits = _dedupe_times_keep_max(hits, merge_minutes=dedupe_minutes)
+    hits.sort(key=lambda x: x[1], reverse=True)  # אופציונלי
+    return hits
+
+def build_30d_tail_95_only():
+    """בונה בלוק טקסט לסוף ההודעה עם כל הזמנים 95%-100% ב-30 יום קדימה."""
+    hits = find_30d_windows_95_only(step_minutes=30, dedupe_minutes=60)
+    if not hits:
+        return "\n\n🍀 30 יום קדימה — אין חלונות 95%-100%."
+    lines = [f"• {dt.strftime('%d/%m/%Y %H:%M')} — 95%-100%" for dt, _ in hits]
+    return "\n\n🍀 30 יום קדימה — כל החלונות 95%-100%:\n" + "\n".join(lines)
+
+# =========================
+#  בנייה ושליחה: 3 ימים + זנב 30 יום (95%-100%)
+# =========================
 def build_and_send_forecast():
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.now(tz)
@@ -197,6 +271,9 @@ def build_and_send_forecast():
 
         best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
         message += f"🟢 <i>המלצה: למלא לוטו, חישגד או צ'אנס סביב {best}</i>\n\n"
+
+    # הוספת זנב של 30 יום — רק 95%-100%
+    message += build_30d_tail_95_only()
 
     send_telegram_message(message)
 
