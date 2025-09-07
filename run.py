@@ -16,7 +16,7 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 TIMEZONE = '+02:00'
-LOCATION = GeoPos('32n5', '34e53')  #פתח תקוה
+LOCATION = GeoPos('32n5', '34e53')  # פתח תקוה
 
 # === כוכבים רלוונטיים למזל פיננסי ===
 PLANETS = [
@@ -27,7 +27,7 @@ ALL_OBJECTS = PLANETS + ['FORTUNE']
 MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MOON, const.PLUTO, 'FORTUNE']
 HARMONIC_ANGLES = [0, 60, 120, 180]
 
-# === טווח שעות כל יום ===
+# === טווח שעות כל יום לתחזית 3 ימים ===
 START_HOUR = 1
 END_HOUR = 24
 INTERVAL = 3
@@ -60,11 +60,14 @@ def calc_angle(pos1, pos2):
     diff = abs(pos1 - pos2) % 360
     return min(diff, 360 - diff)
 
+# מדרג מילולי לתחזית 3 ימים (לפי מספר זוויות שנמצאו)
 def estimate_potential_score(n):
     if n >= 9:
         return "🟢🟢 95–100%"
+    elif n == 8:
+        return "🟢 90–95%"
     elif n >= 7:
-        return "🟢 85–94%"
+        return "🟢 85–89%"
     elif n >= 5:
         return "🟢 70–84%"
     elif n >= 3:
@@ -159,7 +162,7 @@ def send_telegram_message(message: str):
         print(f"שגיאת טלגרם: {e}")
 
 # =========================
-#  תוספת: 30 יום קדימה רק 95%-100%
+#  תוספת: 30 יום קדימה — 95%-100% ו-90%-95%
 # =========================
 def _count_money_aspects_for_datetime(birth_chart, fortune_birth, date_str, time_str, orb_deg=3):
     """סופר זוויות בין MONEY_OBJECTS (לידה) לבין MONEY_OBJECTS (טרנזיט) בזמן נתון."""
@@ -192,10 +195,11 @@ def _dedupe_times_keep_max(times_with_counts, merge_minutes=60):
             merged.append((dt, cnt))
     return merged
 
-def find_30d_windows_95_only(step_minutes=30, dedupe_minutes=60):
+def find_30d_windows_90_95_and_95_100(step_minutes=30, dedupe_minutes=60):
     """
-    סורק 30 יום קדימה (ברזולוציית חצי שעה) ומחזיר את כל הזמנים שמגיעים לרף 95%-100%,
-    כלומר ≥9 זוויות תואמות (לפי estimate_potential_score).
+    סורק 30 יום קדימה (ברזולוציית חצי שעה) ומחזיר שתי רשימות:
+    - hits95: כל הזמנים עם n_aspects >= 9  → 95%-100%
+    - hits90: כל הזמנים עם n_aspects == 8  → 90%-95%
     """
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.now(tz).replace(second=0, microsecond=0)
@@ -204,7 +208,8 @@ def find_30d_windows_95_only(step_minutes=30, dedupe_minutes=60):
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
     fortune_birth = calculate_part_of_fortune(birth_chart)
 
-    hits = []
+    hits95 = []
+    hits90 = []
     t = now
     while t <= end:
         date_str = t.strftime('%Y/%m/%d')
@@ -212,25 +217,46 @@ def find_30d_windows_95_only(step_minutes=30, dedupe_minutes=60):
         n_aspects = _count_money_aspects_for_datetime(
             birth_chart, fortune_birth, date_str, time_str, orb_deg=3
         )
-        # ע״פ הסולם: n>=9 → "🟢🟢 95–100%"
         if n_aspects >= 9:
-            hits.append((t, n_aspects))
+            hits95.append((t, n_aspects))
+        elif n_aspects == 8:
+            hits90.append((t, n_aspects))
         t += timedelta(minutes=step_minutes)
 
-    hits = _dedupe_times_keep_max(hits, merge_minutes=dedupe_minutes)
-    hits.sort(key=lambda x: x[1], reverse=True)  # אופציונלי
-    return hits
+    hits95 = _dedupe_times_keep_max(hits95, merge_minutes=dedupe_minutes)
+    hits90 = _dedupe_times_keep_max(hits90, merge_minutes=dedupe_minutes)
 
-def build_30d_tail_95_only():
-    """בונה בלוק טקסט לסוף ההודעה עם כל הזמנים 95%-100% ב-30 יום קדימה."""
-    hits = find_30d_windows_95_only(step_minutes=30, dedupe_minutes=60)
-    if not hits:
-        return "\n\n🍀 30 יום קדימה — אין חלונות 95%-100%."
-    lines = [f"• {dt.strftime('%d/%m/%Y %H:%M')} — 95%-100%" for dt, _ in hits]
-    return "\n\n🍀 30 יום קדימה — כל החלונות 95%-100%:\n" + "\n".join(lines)
+    hits95.sort(key=lambda x: x[1], reverse=True)
+    hits90.sort(key=lambda x: x[1], reverse=True)
+    return hits90, hits95
+
+def build_30d_tail_90_95_and_95_100():
+    """בונה בלוק טקסט לסוף ההודעה עם כל הזמנים 90%-95% ו-95%-100% ב-30 יום קדימה."""
+    hits90, hits95 = find_30d_windows_90_95_and_95_100(step_minutes=30, dedupe_minutes=60)
+
+    if not hits90 and not hits95:
+        return "\n\n🍀 30 יום קדימה — אין חלונות 90%-100%."
+
+    parts = ["\n\n🍀 30 יום קדימה — חלונות חזקים:\n"]
+
+    if hits95:
+        parts.append("✅ 95%-100%:\n" + "\n".join(
+            f"• {dt.strftime('%d/%m/%Y %H:%M')} — 95%-100%" for dt, _ in hits95
+        ))
+    else:
+        parts.append("✅ 95%-100%: (אין)\n")
+
+    if hits90:
+        parts.append("\n⬆️ 90%-95%:\n" + "\n".join(
+            f"• {dt.strftime('%d/%m/%Y %H:%M')} — 90%-95%" for dt, _ in hits90
+        ))
+    else:
+        parts.append("\n⬆️ 90%-95%: (אין)")
+
+    return "\n".join(parts)
 
 # =========================
-#  בנייה ושליחה: 3 ימים + זנב 30 יום (95%-100%)
+#  בנייה ושליחה: 3 ימים + זנב 30 יום (90%-95% ו-95%-100%)
 # =========================
 def build_and_send_forecast():
     tz = pytz.timezone("Asia/Jerusalem")
@@ -272,8 +298,8 @@ def build_and_send_forecast():
         best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
         message += f"🟢 <i>המלצה: למלא לוטו, חישגד או צ'אנס סביב {best}</i>\n\n"
 
-    # הוספת זנב של 30 יום — רק 95%-100%
-    message += build_30d_tail_95_only()
+    # הוספת זנב של 30 יום — גם 95%-100% וגם 90%-95%
+    message += build_30d_tail_90_95_and_95_100()
 
     send_telegram_message(message)
 
