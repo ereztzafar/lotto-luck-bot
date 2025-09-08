@@ -162,7 +162,7 @@ def send_telegram_message(message: str):
         print(f"שגיאת טלגרם: {e}")
 
 # =========================
-#  תוספת: 30 יום קדימה — 95%-100% ו-90%-95%
+#  תוספת: 30 יום קדימה — יציב מחצות + ליטוש פיק
 # =========================
 def _count_money_aspects_for_datetime(birth_chart, fortune_birth, date_str, time_str, orb_deg=3):
     """סופר זוויות בין MONEY_OBJECTS (לידה) לבין MONEY_OBJECTS (טרנזיט) בזמן נתון."""
@@ -195,39 +195,67 @@ def _dedupe_times_keep_max(times_with_counts, merge_minutes=60):
             merged.append((dt, cnt))
     return merged
 
+def _refine_peak_around(t, birth_chart, fortune_birth, window=20, step=5, orb_deg=3):
+    """מחפש את השיא בתוך ±window דק' סביב t בדיוקיות של step דק'."""
+    best_t = t
+    best_c = _count_money_aspects_for_datetime(
+        birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M'), orb_deg=orb_deg
+    )
+    for delta in range(-window, window + 1, step):
+        if delta == 0:
+            continue
+        tt = t + timedelta(minutes=delta)
+        c = _count_money_aspects_for_datetime(
+            birth_chart, fortune_birth, tt.strftime('%Y/%m/%d'), tt.strftime('%H:%M'), orb_deg=orb_deg
+        )
+        if c > best_c:
+            best_c, best_t = c, tt
+    return best_t, best_c
+
 def find_30d_windows_90_95_and_95_100(step_minutes=30, dedupe_minutes=60):
     """
     סורק 30 יום קדימה (ברזולוציית חצי שעה) ומחזיר שתי רשימות:
     - hits95: כל הזמנים עם n_aspects >= 9  → 95%-100%
     - hits90: כל הזמנים עם n_aspects == 8  → 90%-95%
+    📌 הסריקה תמיד מעוגנת ל-00:00 של היום לשמירה על יציבות בין הרצות.
     """
     tz = pytz.timezone("Asia/Jerusalem")
-    now = datetime.now(tz).replace(second=0, microsecond=0)
-    end = now + timedelta(days=30)
+    now = datetime.now(tz)
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)  # עוגן לחצות
+    end = start + timedelta(days=30)
 
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
     fortune_birth = calculate_part_of_fortune(birth_chart)
 
     hits95 = []
     hits90 = []
-    t = now
+    t = start
     while t <= end:
-        date_str = t.strftime('%Y/%m/%d')
-        time_str = t.strftime('%H:%M')
+        # בדיקה ראשונית בנקודת הרשת
         n_aspects = _count_money_aspects_for_datetime(
-            birth_chart, fortune_birth, date_str, time_str, orb_deg=3
+            birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M'), orb_deg=3
         )
-        if n_aspects >= 9:
-            hits95.append((t, n_aspects))
-        elif n_aspects == 8:
-            hits90.append((t, n_aspects))
-        t += timedelta(minutes=step_minutes)
 
+        # ליטוש סביב הפגיעה אם קרובים/מעל סף (≥7)
+        if n_aspects >= 7:
+            best_t, best_c = _refine_peak_around(t, birth_chart, fortune_birth, window=20, step=5, orb_deg=3)
+        else:
+            best_t, best_c = t, n_aspects
+
+        if best_c >= 9:
+            hits95.append((best_t, best_c))
+        elif best_c == 8:
+            hits90.append((best_t, best_c))
+
+        t += timedelta(minutes=step_minutes)  # אפשר 15 לדגימה עדינה יותר
+
+    # איחוד סמוכים (ושמירת החזק בכל מקבץ)
     hits95 = _dedupe_times_keep_max(hits95, merge_minutes=dedupe_minutes)
     hits90 = _dedupe_times_keep_max(hits90, merge_minutes=dedupe_minutes)
 
-    hits95.sort(key=lambda x: x[1], reverse=True)
-    hits90.sort(key=lambda x: x[1], reverse=True)
+    # מיון (לא חובה, רק לקריאות)
+    hits95.sort(key=lambda x: (x[0], -x[1]))
+    hits90.sort(key=lambda x: (x[0], -x[1]))
     return hits90, hits95
 
 def build_30d_tail_90_95_and_95_100():
@@ -298,7 +326,7 @@ def build_and_send_forecast():
         best = max(lucky_hours, key=lambda x: len(x['זוויות']))['שעה']
         message += f"🟢 <i>המלצה: למלא לוטו, חישגד או צ'אנס סביב {best}</i>\n\n"
 
-    # הוספת זנב של 30 יום — גם 95%-100% וגם 90%-95%
+    # הוספת זנב של 30 יום — 95%-100% ו-90%-95% (יציב מחצות + ליטוש פיק)
     message += build_30d_tail_90_95_and_95_100()
 
     send_telegram_message(message)
