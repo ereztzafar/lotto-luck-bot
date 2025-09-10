@@ -24,8 +24,6 @@ PLANETS = [
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
 ]
 ALL_OBJECTS = PLANETS + ['FORTUNE']
-
-# ⬇️ הוספתי את אורנוס לרשימת הכסף; לניקוד נספר רק ב-60°/120°
 MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MOON, const.PLUTO, const.URANUS, 'FORTUNE']
 HARMONIC_ANGLES = [0, 60, 120, 180]
 
@@ -33,6 +31,11 @@ HARMONIC_ANGLES = [0, 60, 120, 180]
 START_HOUR = 1
 END_HOUR = 24
 INTERVAL = 3
+
+# === תצורת דיוק ===
+URANUS_MODE = 'conservative'  # options: 'off' | 'positive_only' | 'conservative'
+BENEFICS = {const.VENUS, const.JUPITER, 'FORTUNE'}  # מיטיבים
+BASE_ORB = 3  # בסיס לאורביס (מסתגל בהמשך)
 
 # === מיפוי סמלים לכוכבים ===
 PLANET_ICONS = {
@@ -62,6 +65,29 @@ def calc_angle(pos1, pos2):
     diff = abs(pos1 - pos2) % 360
     return min(diff, 360 - diff)
 
+# אורביס מסתגל: מיטיבים/PoF מקבלים 3°, אחרים 2° (מפחית רעש)
+def _orb_for_pair(p1, p2, base=BASE_ORB):
+    strong = {const.JUPITER, const.VENUS, 'FORTUNE'}
+    return base if (p1 in strong or p2 in strong) else 2
+
+# אורנוס – כללי ספירה לפי מצב
+def _uranus_counts(p1, p2, h_angle):
+    if URANUS_MODE == 'off':
+        return False
+    if h_angle not in (60, 120):
+        return False
+    if URANUS_MODE == 'positive_only':
+        return (p1 == const.URANUS or p2 == const.URANUS)
+    # conservative: נספר רק מול ונוס/צדק/FORTUNE
+    return ((p1 == const.URANUS and p2 in BENEFICS) or
+            (p2 == const.URANUS and p1 in BENEFICS))
+
+# כלל ניקוד מאוחד לכל הכוכבים (כולל אורנוס)
+def _is_scoring_aspect(p1, p2, h_angle):
+    if p1 == const.URANUS or p2 == const.URANUS:
+        return _uranus_counts(p1, p2, h_angle)
+    return h_angle in (0, 60, 120, 180)
+
 # מדרג מילולי לתחזית 3 ימים (לפי מספר זוויות שנכנסו לניקוד)
 def estimate_potential_score(n):
     if n >= 9:
@@ -83,12 +109,8 @@ def estimate_potential_score(n):
 #  שליחה בטוחה ל-HTML
 # =========================
 def _split_html_safe(text: str, max_bytes: int = 3900):
-    """מפצל טקסט לקטעים בטוחים ל-HTML:
-    לא שובר תגיות <b>/<i>/<u>/<code>, סוגר אותן בסוף חלק ופותח מחדש בתחילת הבא.
-    """
-    parts = []
-    open_tags = []   # נעקוב אחרי סדר פתיחת תגיות
-    buf = ''
+    """מפצל טקסט לקטעים בטוחים ל-HTML: לא שובר תגיות בסיסיות."""
+    parts, open_tags, buf = [], [], ''
 
     def update_stack(stack, seg):
         for m in re.finditer(r'<(/?)(b|i|u|code)>', seg):
@@ -101,25 +123,20 @@ def _split_html_safe(text: str, max_bytes: int = 3900):
                 stack.append(tag)
         return stack
 
-    for line in text.splitlines(True):  # שומר \n
+    for line in text.splitlines(True):
         candidate = buf + line
         if len(candidate.encode('utf-8')) <= max_bytes:
             buf = candidate
         else:
-            # סגור תגיות פתוחות בסוף החלק
-            closed = buf + ''.join(f'</{t}>' for t in reversed(open_tags))
-            parts.append(closed)
-            # פתח שוב בתחילת החלק הבא
+            parts.append(buf + ''.join(f'</{t}>' for t in reversed(open_tags)))
             buf = ''.join(f'<{t}>' for t in open_tags) + line
         open_tags = update_stack(open_tags, line)
 
     if buf:
-        closed = buf + ''.join(f'</{t}>' for t in reversed(open_tags))
-        parts.append(closed)
+        parts.append(buf + ''.join(f'</{t}>' for t in reversed(open_tags)))
     return parts
 
 def send_telegram_message(message: str):
-    """שולח הודעה מפוצלת בבטחה כ-HTML, ללא שבירת תגיות וללא חריגה מהמגבלת בתים."""
     if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
         print("❌ חסר TELEGRAM_TOKEN או CHAT_ID")
         return
@@ -136,9 +153,9 @@ def send_telegram_message(message: str):
         print(f"שגיאת טלגרם: {e}")
 
 # =========================
-#  תחזית 3 ימים — אורנוס נספר רק 60°/120°, 180°=אזהרה
+#  תחזית 3 ימים — אורנוס שמרני + אורביס חכם
 # =========================
-def find_lucky_hours(date_obj, birth_chart, fortune_birth, orb_deg=3):
+def find_lucky_hours(date_obj, birth_chart, fortune_birth):
     date_str = date_obj.strftime('%Y/%m/%d')
     lucky_blocks = []
 
@@ -147,9 +164,9 @@ def find_lucky_hours(date_obj, birth_chart, fortune_birth, orb_deg=3):
         transit_chart = create_chart(date_str, time_str)
         fortune_now = calculate_part_of_fortune(transit_chart)
 
-        found_aspects = []
-        warnings = []
-        score_count = 0  # נספר לניקוד בלבד (לפי כללי אורנוס)
+        found_aspects, warnings = [], []
+        score_count = 0
+        uranus_scored_this_minute = False  # תרומה אחת לדקה
 
         for p1 in MONEY_OBJECTS:
             pos1 = birth_chart.get(p1).lon if p1 != 'FORTUNE' else fortune_birth
@@ -157,28 +174,29 @@ def find_lucky_hours(date_obj, birth_chart, fortune_birth, orb_deg=3):
                 pos2 = transit_chart.get(p2).lon if p2 != 'FORTUNE' else fortune_now
                 ang_val = calc_angle(pos1, pos2)
                 for h_angle in HARMONIC_ANGLES:
-                    if abs(ang_val - h_angle) <= orb_deg:
-                        involves_uranus = (p1 == const.URANUS or p2 == const.URANUS)
-
+                    if abs(ang_val - h_angle) <= _orb_for_pair(p1, p2, base=BASE_ORB):
                         icon1 = PLANET_ICONS.get(p1, p1)
                         icon2 = PLANET_ICONS.get(p2, p2)
                         meaning = ANGLE_MEANINGS.get(h_angle, "")
                         label = f"{icon1} {p1} ↔ {icon2} {p2} — {h_angle}° {meaning}"
+                        involves_uranus = (p1 == const.URANUS or p2 == const.URANUS)
 
-                        if involves_uranus:
-                            if h_angle in (60, 120):
-                                score_count += 1
-                                found_aspects.append(label)
-                            elif h_angle == 180:
-                                warnings.append("⚠️ אורנוס באופוזיציה (180°) — הפתעה שעלולה להיות תנודתית")
-                                found_aspects.append("⚠️ " + label)
+                        # אזהרה: אורנוס 180°
+                        if involves_uranus and h_angle == 180:
+                            warnings.append("⚠️ אורנוס באופוזיציה (180°) — תנודתיות")
+                            found_aspects.append("⚠️ " + label)
+                            continue
+
+                        # ניקוד לפי כלל מאוחד
+                        if _is_scoring_aspect(p1, p2, h_angle):
+                            if involves_uranus:
+                                if not uranus_scored_this_minute:
+                                    score_count += 1
+                                    uranus_scored_this_minute = True
                             else:
-                                # 0° עם אורנוס — מציגים למידע, לא נספר לניקוד
-                                found_aspects.append(label)
-                        else:
-                            # בלי אורנוס — נספר כרגיל
-                            score_count += 1
-                            found_aspects.append(label)
+                                score_count += 1
+                        # מציגים תמיד בטקסט (גם אם לא נספר לניקוד)
+                        found_aspects.append(label)
 
         if found_aspects:
             lucky_blocks.append({
@@ -190,31 +208,34 @@ def find_lucky_hours(date_obj, birth_chart, fortune_birth, orb_deg=3):
     return lucky_blocks
 
 # =========================
-#  תוספת: 30 יום קדימה — יציב מחצות + ליטוש פיק + כללי אורנוס
+#  30 יום קדימה — יציב מחצות + ליטוש פיק + אורנוס שמרני + אורביס חכם
 # =========================
-def _count_money_aspects_for_datetime(birth_chart, fortune_birth, date_str, time_str, orb_deg=3):
-    """סופר זוויות לניקוד בלבד (אורנוס: רק 60°/120°; 180° לא נספר)."""
+def _count_money_aspects_for_datetime(birth_chart, fortune_birth, date_str, time_str):
     transit_chart = create_chart(date_str, time_str)
     fortune_now = calculate_part_of_fortune(transit_chart)
 
     count = 0
+    uranus_scored = False
     for p1 in MONEY_OBJECTS:
         pos1 = birth_chart.get(p1).lon if p1 != 'FORTUNE' else fortune_birth
         for p2 in MONEY_OBJECTS:
             pos2 = transit_chart.get(p2).lon if p2 != 'FORTUNE' else fortune_now
             ang_val = calc_angle(pos1, pos2)
             for h_angle in HARMONIC_ANGLES:
-                if abs(ang_val - h_angle) <= orb_deg:
+                if abs(ang_val - h_angle) <= _orb_for_pair(p1, p2, base=BASE_ORB):
                     involves_uranus = (p1 == const.URANUS or p2 == const.URANUS)
-                    if involves_uranus:
-                        if h_angle in (60, 120):
-                            count += 1  # אורנוס נספר רק בזוויות החיוביות
-                    else:
-                        count += 1   # שאר הכוכבים נספרים כרגיל
+                    if involves_uranus and h_angle == 180:
+                        continue  # לא נספר
+                    if _is_scoring_aspect(p1, p2, h_angle):
+                        if involves_uranus:
+                            if not uranus_scored:
+                                count += 1
+                                uranus_scored = True
+                        else:
+                            count += 1
     return count
 
-def _dedupe_times_keep_max(times_with_counts, merge_minutes=60):
-    """מאחד זמנים סמוכים (≤ merge_minutes) ושומר את הגבוה."""
+def _dedupe_times_keep_max(times_with_counts, merge_minutes=45):
     if not times_with_counts:
         return []
     times_with_counts.sort(key=lambda x: x[0])
@@ -228,50 +249,47 @@ def _dedupe_times_keep_max(times_with_counts, merge_minutes=60):
             merged.append((dt, cnt))
     return merged
 
-def _refine_peak_around(t, birth_chart, fortune_birth, window=20, step=5, orb_deg=3):
-    """מחפש את השיא בתוך ±window דק' סביב t בדיוקיות של step דק'."""
+def _refine_peak_around(t, birth_chart, fortune_birth, window=30, step=2):
+    """מוצא את השיא בתוך ±window דק' בדיוקיות step דק'."""
     best_t = t
     best_c = _count_money_aspects_for_datetime(
-        birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M'), orb_deg=orb_deg
+        birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M')
     )
     for delta in range(-window, window + 1, step):
         if delta == 0:
             continue
         tt = t + timedelta(minutes=delta)
         c = _count_money_aspects_for_datetime(
-            birth_chart, fortune_birth, tt.strftime('%Y/%m/%d'), tt.strftime('%H:%M'), orb_deg=orb_deg
+            birth_chart, fortune_birth, tt.strftime('%Y/%m/%d'), tt.strftime('%H:%M')
         )
         if c > best_c:
             best_c, best_t = c, tt
     return best_t, best_c
 
-def find_30d_windows_90_95_and_95_100(step_minutes=30, dedupe_minutes=60):
+def find_30d_windows_90_95_and_95_100(step_minutes=15, dedupe_minutes=45):
     """
-    סורק 30 יום קדימה (ברזולוציית חצי שעה) ומחזיר שתי רשימות:
+    סורק 30 יום קדימה (מ-00:00 היום) ומחזיר:
     - hits95: n>=9  → 95%-100%
     - hits90: n==8  → 90%-95%
-    📌 הסריקה תמיד מעוגנת ל-00:00 של היום (תוצאה יציבה לכל היום).
     """
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.now(tz)
-    start = now.replace(hour=0, minute=0, second=0, microsecond=0)  # עוגן לחצות
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)  # יציב לכל היום
     end = start + timedelta(days=30)
 
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
     fortune_birth = calculate_part_of_fortune(birth_chart)
 
-    hits95 = []
-    hits90 = []
+    hits95, hits90 = [], []
     t = start
     while t <= end:
-        # בדיקה ראשונית בנקודת הרשת
         n_aspects = _count_money_aspects_for_datetime(
-            birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M'), orb_deg=3
+            birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M')
         )
 
         # ליטוש סביב פגיעה אם קרובים/מעל סף (≥7)
         if n_aspects >= 7:
-            best_t, best_c = _refine_peak_around(t, birth_chart, fortune_birth, window=20, step=5, orb_deg=3)
+            best_t, best_c = _refine_peak_around(t, birth_chart, fortune_birth, window=30, step=2)
         else:
             best_t, best_c = t, n_aspects
 
@@ -280,20 +298,18 @@ def find_30d_windows_90_95_and_95_100(step_minutes=30, dedupe_minutes=60):
         elif best_c == 8:
             hits90.append((best_t, best_c))
 
-        t += timedelta(minutes=step_minutes)  # אפשר 15 לדגימה עדינה יותר
+        t += timedelta(minutes=step_minutes)
 
-    # איחוד סמוכים (ושמירת החזק בכל מקבץ)
     hits95 = _dedupe_times_keep_max(hits95, merge_minutes=dedupe_minutes)
     hits90 = _dedupe_times_keep_max(hits90, merge_minutes=dedupe_minutes)
 
-    # מיון (לא חובה, רק לקריאות)
-    hits95.sort(key=lambda x: (x[0], -x[1]))
-    hits90.sort(key=lambda x: (x[0], -x[1]))
+    # מיון כרונולוגי לתצוגה נקייה
+    hits95.sort(key=lambda x: x[0])
+    hits90.sort(key=lambda x: x[0])
     return hits90, hits95
 
 def build_30d_tail_90_95_and_95_100():
-    """בונה בלוק טקסט לסוף ההודעה עם כל הזמנים 90%-95% ו-95%-100% ב-30 יום קדימה."""
-    hits90, hits95 = find_30d_windows_90_95_and_95_100(step_minutes=30, dedupe_minutes=60)
+    hits90, hits95 = find_30d_windows_90_95_and_95_100(step_minutes=15, dedupe_minutes=45)
 
     if not hits90 and not hits95:
         return "\n\n🍀 30 יום קדימה — אין חלונות 90%-100%."
@@ -327,7 +343,7 @@ def build_and_send_forecast():
 
     message = f"📆 <b>תחזית לוטו אסטרולוגית – 3 הימים הקרובים 🎟️</b>\n"
     message += f"🧬 לפי מפת לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
-    message += f"🎯 שעות מזל כספי מוצגות לפי זוויות בין כוכבי לידה לטרנזיט (אורנוס נספר רק ב-60°/120°; 180°=אזהרה):\n\n"
+    message += f"🎯 שעות מזל כספי מוצגות לפי זוויות בין כוכבי לידה לטרנזיט (אורנוס: מצב {URANUS_MODE}; 180°=אזהרה):\n\n"
 
     for i in range(3):
         day = now + timedelta(days=i)
@@ -349,24 +365,18 @@ def build_and_send_forecast():
             continue
 
         for block in lucky_hours:
-            # משתמשים במספר הזוויות שנכנסו לניקוד (אורנוס 180/0 לא מנפח)
-            num_for_score = block.get('score_count', len(block['זוויות']))
+            num_for_score = block.get('score_count', 0)
             percent = estimate_potential_score(num_for_score)
             message += f"🕐 <b>{block['שעה']}</b> – 💰 פוטנציאל זכייה: {percent}\n"
-
-            # פירוט הזוויות (אורנוס 180 יסומן עם ⚠️ ונכנס לשורת אזהרות)
             for asp in block['זוויות']:
                 message += f"• {asp}\n"
-
             for w in block.get('warnings', []):
                 message += f"{w}\n"
-
             message += "\n"
 
-        best = max(lucky_hours, key=lambda x: x.get('score_count', len(x['זוויות'])))['שעה']
+        best = max(lucky_hours, key=lambda x: x.get('score_count', 0))['שעה']
         message += f"🟢 <i>המלצה: למלא לוטו, חישגד או צ'אנס סביב {best}</i>\n\n"
 
-    # הוספת זנב של 30 יום — 95%-100% ו-90%-95% (עם כללי אורנוס)
     message += build_30d_tail_90_95_and_95_100()
 
     send_telegram_message(message)
