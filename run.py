@@ -282,7 +282,7 @@ def _limit_per_day(hits, max_per_day=2):
     trimmed.sort(key=lambda x: x[0])
     return trimmed
 
-# === סריקת 30 יום (כבר קיימת, נשארת) ===
+# === סריקת 30 יום — מסנן שעות שעברו ===
 def find_30d_windows_weighted(step_minutes=STEP_MINUTES, dedupe_minutes=DEDUPE_MINUTES):
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.now(tz)
@@ -300,6 +300,11 @@ def find_30d_windows_weighted(step_minutes=STEP_MINUTES, dedupe_minutes=DEDUPE_M
             best_t, best_s, best_key = _refine_peak_around(t, birth_chart, fortune_birth)
         else:
             best_t, best_s, best_key = t, s, key
+
+        # NEW: אל תכלול זמנים שכבר עברו
+        if best_t < now:
+            t += timedelta(minutes=step_minutes)
+            continue
 
         if not best_key:
             t += timedelta(minutes=step_minutes)
@@ -342,10 +347,11 @@ def build_30d_tail_weighted():
         parts.append("\n⬆️ 90%-95%: (אין)")
     return "\n".join(parts)
 
-# === NEW: תקציר חזק ליום אחד (ליד הרשימה המפורטת) ===
+# === תקציר חזק ליום אחד — מסנן שעות שעברו היום ===
 def find_day_windows_weighted(day_dt, birth_chart, fortune_birth):
-    """מחזיר חלונות 95/90 לאותו היום בלבד (עם ליטוש ואיחוד)."""
+    """מחזיר חלונות 95/90 לאותו היום בלבד (עם ליטוש ואיחוד), החל מעכשיו אם זה היום הנוכחי."""
     tz = pytz.timezone("Asia/Jerusalem")
+    now = datetime.now(tz)
     start = tz.localize(datetime(day_dt.year, day_dt.month, day_dt.day, 0, 0)).astimezone(tz)
     end = start + timedelta(days=1)
 
@@ -357,6 +363,11 @@ def find_day_windows_weighted(day_dt, birth_chart, fortune_birth):
             best_t, best_s, best_key = _refine_peak_around(t, birth_chart, fortune_birth)
         else:
             best_t, best_s, best_key = t, s, key
+
+        # NEW: אם היום הוא היום הנוכחי — אל תכלול שעבר
+        if best_t < now:
+            t += timedelta(minutes=STEP_MINUTES)
+            continue
 
         if best_key:  # חייב טריין 120° אל צדק/ונוס/PoF
             if best_s >= SCORE_95:
@@ -373,7 +384,7 @@ def find_day_windows_weighted(day_dt, birth_chart, fortune_birth):
     return hits90, hits95
 
 def build_day_tail_weighted(day_dt, birth_chart, fortune_birth):
-    """בונה בלוק טקסט קצר לחלונות 95/90 לאותו היום."""
+    """בונה בלוק טקסט קצר לחלונות 95/90 לאותו היום (רק מהעתיד והלאה)."""
     hits90, hits95 = find_day_windows_weighted(day_dt, birth_chart, fortune_birth)
     lines = []
     if hits95:
@@ -435,10 +446,10 @@ def build_and_send_forecast():
             best = max(lucky_hours, key=lambda x: x.get('score_sum', 0.0))['שעה']
             message += f"🟢 <i>המלצה: למלא לוטו, חישגד או צ'אנס סביב {best}</i>\n\n"
 
-        # תקציר חזק לאותו היום (95/90)
+        # תקציר חזק לאותו היום (95/90) — רק מהעתיד והלאה
         message += build_day_tail_weighted(day, birth_chart, fortune_birth) + "\n\n"
 
-    # זנב 30 יום – חזק
+    # זנב 30 יום – חזק — רק מהעתיד והלאה
     message += build_30d_tail_weighted()
     send_telegram_message(message)
 
