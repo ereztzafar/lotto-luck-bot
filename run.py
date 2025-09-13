@@ -1,19 +1,24 @@
 import os
 import re
 from datetime import datetime, timedelta
+from collections import defaultdict
+
 from flatlib.chart import Chart
 from flatlib.datetime import Datetime
 from flatlib.geopos import GeoPos
 from flatlib import const, angle
 import pytz
 import telegram
-from collections import defaultdict
 
-# === טלגרם ===
+# =========================
+#  הגדרות בסיס
+# =========================
+
+# === טלגרם (לקבל מה־ENV) ===
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-# === פרטי לידה שלך ===
+# === פרטי לידה ===
 BIRTH_DATE = '1970/11/22'
 BIRTH_TIME = '06:00'
 TIMEZONE = '+02:00'
@@ -25,29 +30,33 @@ PLANETS = [
     const.JUPITER, const.SATURN, const.URANUS, const.NEPTUNE, const.PLUTO
 ]
 ALL_OBJECTS = PLANETS + ['FORTUNE']
+# מוסיפים אוראנוס, אבל מחמירים את הכללים שלו (ראה משקולות)
 MONEY_OBJECTS = [const.VENUS, const.JUPITER, const.MOON, const.PLUTO, const.URANUS, 'FORTUNE']
 
-# נסרוק 0/60/120/180; אוראנוס נספר בניקוד רק ב-120°
+# זוויות נבדקות
 HARMONIC_ANGLES = [0, 60, 120, 180]
 
-# === טווח שעות לתחזית 3 ימים (רשימה מפורטת) ===
+# === תחזית 3 ימים (רשימה מפורטת) — דגימת שעות ===
 START_HOUR = 1
 END_HOUR = 24
-INTERVAL = 3
+INTERVAL = 3  # כל 3 שעות
 
-# === תצורת ניקוד/דיוק ===
-BASE_ORB = 3                 # אורביס קבוע
-DEDUPE_MINUTES = 120         # איחוד חלונות סמוכים (לרשימות 30 יום ותקציר יומי)
-STEP_MINUTES = 15            # דגימה לרשימות 30 יום ותקציר יומי
-REFINE_WINDOW = 30           # ליטוש פיק ±דקות
-REFINE_STEP = 2              # צעד ליטוש בדקות
-MAX_URANUS_PER_MIN = 2       # הגבלת תרומת אוראנוס לדקה
+# === תצורת ניקוד ודיוק ===
+BASE_ORB = 3                  # אורביס
+DEDUPE_MINUTES = 120          # איחוד חלונות סמוכים
+STEP_MINUTES = 15             # רזולוציית סריקה לתקצירים/15 יום
+REFINE_WINDOW = 30            # ליטוש פיק ± דקות
+REFINE_STEP = 2               # צעד ליטוש
+MAX_URANUS_PER_MIN = 2        # הגבלת תרומת אוראנוס לדקה
 
-# ספי ניקוד משוקלל
-SCORE_95 = 14.0              # ≥ 14 → 95%-100%
-SCORE_90 = 11.5              # [11.5, 14) → 90%-95%
+# ספי ניקוד משוקלל (מגדירים מדרגות)
+SCORE_95 = 14.0               # >=14 → 95%-100%
+SCORE_90 = 11.5               # [11.5,14) → 90%-95%
 
 BENEFICS = {const.VENUS, const.JUPITER, 'FORTUNE'}
+
+# טווח הרחבת הסריקה הרחבה
+DAYS_AHEAD = 15  # 15 יום קדימה מהשעה הנוכחית
 
 # === סמלים ===
 PLANET_ICONS = {
@@ -62,7 +71,10 @@ ANGLE_MEANINGS = {
     180: "הפתעה פתאומית"
 }
 
-# === עזרי אסטרולוגיה ===
+# =========================
+#  פונקציות אסטרולוגיה
+# =========================
+
 def calculate_part_of_fortune(chart):
     asc = chart.get(const.ASC).lon
     moon = chart.get(const.MOON).lon
@@ -78,20 +90,20 @@ def calc_angle(pos1, pos2):
     return min(diff, 360 - diff)
 
 def _orb_for_pair(p1, p2, base=BASE_ORB):
-    return base  # קבוע ופשוט
+    return base  # פשוט וקבוע
 
-# משקל היבט: מחזיר ערך נקודתי (float)
+# משקל היבט (ככל שגבוה יותר — חזק יותר)
 def aspect_weight(p1, p2, h_angle):
     involves_uranus = (p1 == const.URANUS or p2 == const.URANUS)
     benefic_involved = (p1 in BENEFICS or p2 in BENEFICS)
 
-    # אוראנוס: רק 120°, עם משקל גבוה; 180° לא נספר; 0°/60° לא נספר
+    # אוראנוס: נחשב רק ב־120°, חזק; 180° לא נספר; 0°/60° לא נספרים
     if involves_uranus:
         if h_angle == 120:
             return 2.0
         return 0.0
 
-    # ללא אוראנוס — משקל לפי זווית והאם יש מיטיב/PoF
+    # ללא אוראנוס — מדרג לפי זווית והאם מעורב מיטיב/PoF
     if h_angle == 120:
         return 2.0 if benefic_involved else 1.5
     if h_angle == 60:
@@ -100,7 +112,7 @@ def aspect_weight(p1, p2, h_angle):
         return 0.5 if benefic_involved else 0.0
     return 0.0
 
-# מדרג מילולי (לרשימה המפורטת של 3 ימים) על בסיס ניקוד משוקלל
+# מדרג מילולי (לרשימת 3 הימים המפורטת)
 def estimate_potential_score(score):
     if score >= SCORE_95:
         return "🟢🟢 95–100%"
@@ -118,8 +130,9 @@ def estimate_potential_score(score):
         return "⬜ 0%"
 
 # =========================
-#  שליחה בטוחה ל-HTML
+#  שליחה בטוחה ל־HTML (טלגרם)
 # =========================
+
 def _split_html_safe(text: str, max_bytes: int = 3900):
     parts, open_tags, buf = [], [], ''
     def update_stack(stack, seg):
@@ -161,10 +174,11 @@ def send_telegram_message(message: str):
         print(f"שגיאת טלגרם: {e}")
 
 # =========================
-#  תחזית 3 ימים — רשימה מפורטת (שעה-שעה) + תקציר יומי חזק
+#  תחזית 3 ימים — רשימה מפורטת
 # =========================
+
 def find_lucky_hours(date_obj, birth_chart, fortune_birth):
-    """רשימה מפורטת לפי שעות קבועות (לצורך הצגה טקסטואלית)."""
+    """רשימה מפורטת לפי שעות קבועות (להצגה טקסטואלית נוחה)."""
     date_str = date_obj.strftime('%Y/%m/%d')
     lucky_blocks = []
 
@@ -214,14 +228,17 @@ def find_lucky_hours(date_obj, birth_chart, fortune_birth):
             })
     return lucky_blocks
 
-# === ניקוד נקודתי (לסריקת 30 יום והתקציר היומי) ===
+# =========================
+#  ניקוד נקודתי + עזרי סינון
+# =========================
+
 def _score_for_datetime(birth_chart, fortune_birth, date_str, time_str):
     transit_chart = create_chart(date_str, time_str)
     fortune_now = calculate_part_of_fortune(transit_chart)
 
     score_sum = 0.0
     uranus_used = 0
-    key_trine = False  # טריין 120° אל צדק/ונוס/PoF
+    key_trine = False  # טריין 120° אל ונוס/צדק/PoF
 
     for p1 in MONEY_OBJECTS:
         pos1 = birth_chart.get(p1).lon if p1 != 'FORTUNE' else fortune_birth
@@ -261,12 +278,14 @@ def _dedupe_times_keep_max(times_with_scores, merge_minutes=DEDUPE_MINUTES):
 
 def _refine_peak_around(t, birth_chart, fortune_birth, window=REFINE_WINDOW, step=REFINE_STEP):
     best_t = t
-    best_s, best_key = _score_for_datetime(birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M'))
+    best_s, best_key = _score_for_datetime(birth_chart, fortune_birth,
+                                           t.strftime('%Y/%m/%d'), t.strftime('%H:%M'))
     for delta in range(-window, window + 1, step):
         if delta == 0:
             continue
         tt = t + timedelta(minutes=delta)
-        s, key = _score_for_datetime(birth_chart, fortune_birth, tt.strftime('%Y/%m/%d'), tt.strftime('%H:%M'))
+        s, key = _score_for_datetime(birth_chart, fortune_birth,
+                                     tt.strftime('%Y/%m/%d'), tt.strftime('%H:%M'))
         if s > best_s:
             best_s, best_t, best_key = s, tt, key
     return best_t, best_s, best_key
@@ -282,12 +301,19 @@ def _limit_per_day(hits, max_per_day=2):
     trimmed.sort(key=lambda x: x[0])
     return trimmed
 
-# === סריקת 30 יום — מסנן שעות שעברו ===
-def find_30d_windows_weighted(step_minutes=STEP_MINUTES, dedupe_minutes=DEDUPE_MINUTES):
+# =========================
+#  סריקת 15 יום קדימה (מהשעה הנוכחית)
+# =========================
+
+def find_15d_windows_weighted(step_minutes=STEP_MINUTES, dedupe_minutes=DEDUPE_MINUTES):
+    """
+    סורק 15 יום קדימה מהשעה הנוכחית ומחזיר חלונות 90–95% ו־95–100%.
+    מציג רק זמנים בעתיד (מדלג על עבר).
+    """
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.now(tz)
-    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    end = start + timedelta(days=30)
+    start = now
+    end = now + timedelta(days=DAYS_AHEAD)
 
     birth_chart = create_chart(BIRTH_DATE, BIRTH_TIME)
     fortune_birth = calculate_part_of_fortune(birth_chart)
@@ -295,17 +321,19 @@ def find_30d_windows_weighted(step_minutes=STEP_MINUTES, dedupe_minutes=DEDUPE_M
     hits95, hits90 = [], []
     t = start
     while t <= end:
-        s, key = _score_for_datetime(birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M'))
+        s, key = _score_for_datetime(birth_chart, fortune_birth,
+                                     t.strftime('%Y/%m/%d'), t.strftime('%H:%M'))
         if s >= (SCORE_90 - 1.5):
             best_t, best_s, best_key = _refine_peak_around(t, birth_chart, fortune_birth)
         else:
             best_t, best_s, best_key = t, s, key
 
-        # NEW: אל תכלול זמנים שכבר עברו
+        # לדלג על זמנים שעברו
         if best_t < now:
             t += timedelta(minutes=step_minutes)
             continue
 
+        # חובה טריין 120° אל מיטיב/PoF
         if not best_key:
             t += timedelta(minutes=step_minutes)
             continue
@@ -317,21 +345,22 @@ def find_30d_windows_weighted(step_minutes=STEP_MINUTES, dedupe_minutes=DEDUPE_M
 
         t += timedelta(minutes=step_minutes)
 
+    # איחוד, הגבלה ומיון
     hits95 = _dedupe_times_keep_max(hits95, merge_minutes=dedupe_minutes)
     hits90 = _dedupe_times_keep_max(hits90, merge_minutes=dedupe_minutes)
     hits95 = _limit_per_day(hits95, max_per_day=2)
     hits90 = _limit_per_day(hits90, max_per_day=2)
-
     hits95.sort(key=lambda x: x[0])
     hits90.sort(key=lambda x: x[0])
     return hits90, hits95
 
-def build_30d_tail_weighted():
-    hits90, hits95 = find_30d_windows_weighted()
+def build_15d_tail_weighted():
+    """בונה בלוק טקסט לכל החלונות 90%-95% ו־95%-100% ב־15 יום קדימה."""
+    hits90, hits95 = find_15d_windows_weighted()
     if not hits90 and not hits95:
-        return "\n\n🍀 30 יום קדימה — אין חלונות 90%-100%."
+        return "\n\n🍀 15 יום קדימה — אין חלונות 90%-100%."
 
-    parts = ["\n\n🍀 30 יום קדימה — חלונות חזקים (ניקוד):\n"]
+    parts = ["\n\n🍀 15 יום קדימה — חלונות חזקים (ניקוד):\n"]
     if hits95:
         parts.append("✅ 95%-100%:\n" + "\n".join(
             f"• {dt.strftime('%d/%m/%Y %H:%M')} — 95%-100%" for dt, _ in hits95
@@ -347,9 +376,12 @@ def build_30d_tail_weighted():
         parts.append("\n⬆️ 90%-95%: (אין)")
     return "\n".join(parts)
 
-# === תקציר חזק ליום אחד — מסנן שעות שעברו היום ===
+# =========================
+#  תקציר יומי חזק (95/90) — רק מהעתיד והלאה
+# =========================
+
 def find_day_windows_weighted(day_dt, birth_chart, fortune_birth):
-    """מחזיר חלונות 95/90 לאותו היום בלבד (עם ליטוש ואיחוד), החל מעכשיו אם זה היום הנוכחי."""
+    """חלונות 95/90 ליום נתון; אם זה היום — מציג רק שעות עתידיות."""
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.now(tz)
     start = tz.localize(datetime(day_dt.year, day_dt.month, day_dt.day, 0, 0)).astimezone(tz)
@@ -358,18 +390,18 @@ def find_day_windows_weighted(day_dt, birth_chart, fortune_birth):
     hits95, hits90 = [], []
     t = start
     while t < end:
-        s, key = _score_for_datetime(birth_chart, fortune_birth, t.strftime('%Y/%m/%d'), t.strftime('%H:%M'))
+        s, key = _score_for_datetime(birth_chart, fortune_birth,
+                                     t.strftime('%Y/%m/%d'), t.strftime('%H:%M'))
         if s >= (SCORE_90 - 1.5):
             best_t, best_s, best_key = _refine_peak_around(t, birth_chart, fortune_birth)
         else:
             best_t, best_s, best_key = t, s, key
 
-        # NEW: אם היום הוא היום הנוכחי — אל תכלול שעבר
-        if best_t < now:
+        if day_dt.date() == now.date() and best_t < now:
             t += timedelta(minutes=STEP_MINUTES)
             continue
 
-        if best_key:  # חייב טריין 120° אל צדק/ונוס/PoF
+        if best_key:
             if best_s >= SCORE_95:
                 hits95.append((best_t, best_s))
             elif best_s >= SCORE_90:
@@ -384,7 +416,7 @@ def find_day_windows_weighted(day_dt, birth_chart, fortune_birth):
     return hits90, hits95
 
 def build_day_tail_weighted(day_dt, birth_chart, fortune_birth):
-    """בונה בלוק טקסט קצר לחלונות 95/90 לאותו היום (רק מהעתיד והלאה)."""
+    """טקסט קצר לחלונות 95/90 ליום הנתון (רק עתיד)."""
     hits90, hits95 = find_day_windows_weighted(day_dt, birth_chart, fortune_birth)
     lines = []
     if hits95:
@@ -404,6 +436,7 @@ def build_day_tail_weighted(day_dt, birth_chart, fortune_birth):
 # =========================
 #  בנייה ושליחה
 # =========================
+
 def build_and_send_forecast():
     tz = pytz.timezone("Asia/Jerusalem")
     now = datetime.now(tz)
@@ -412,13 +445,14 @@ def build_and_send_forecast():
 
     message = f"📆 <b>תחזית לוטו אסטרולוגית – 3 הימים הקרובים 🎟️</b>\n"
     message += f"🧬 לפי מפת לידה: {BIRTH_DATE} {BIRTH_TIME} פ\"ת\n"
-    message += f"🎯 ניקוד משוקלל (120° מועדף; אורנוס נספר רק ב־120°, 180°=אזהרה):\n\n"
+    message += f"🎯 ניקוד משוקלל (120° מועדף; אוראנוס נספר רק ב־120°, 180°=אזהרה):\n\n"
 
     for i in range(3):
         day = now + timedelta(days=i)
         date_str = day.strftime('%Y/%m/%d')
         message += f"📅 <b>{date_str}</b>\n"
 
+        # נסיגות בצהרי היום
         transit_chart_noon = create_chart(date_str, '12:00')
         retro_now = [p for p in PLANETS if transit_chart_noon.get(p).isRetrograde()]
         if retro_now:
@@ -428,7 +462,7 @@ def build_and_send_forecast():
                 message += f"⚠️ <i>המלצה: לנקוט זהירות – השפעת נסיגות מרובה</i>\n"
         message += "\n"
 
-        # רשימה מפורטת
+        # רשימה מפורטת (שעה-שעה)
         lucky_hours = find_lucky_hours(day, birth_chart, fortune_birth)
         if not lucky_hours:
             message += "❌ אין שעות מזל לוטו ביום זה.\n\n"
@@ -446,11 +480,12 @@ def build_and_send_forecast():
             best = max(lucky_hours, key=lambda x: x.get('score_sum', 0.0))['שעה']
             message += f"🟢 <i>המלצה: למלא לוטו, חישגד או צ'אנס סביב {best}</i>\n\n"
 
-        # תקציר חזק לאותו היום (95/90) — רק מהעתיד והלאה
+        # תקציר חזק לאותו היום (רק מהעתיד והלאה)
         message += build_day_tail_weighted(day, birth_chart, fortune_birth) + "\n\n"
 
-    # זנב 30 יום – חזק — רק מהעתיד והלאה
-    message += build_30d_tail_weighted()
+    # זנב 15 יום קדימה (רק עתיד)
+    message += build_15d_tail_weighted()
+
     send_telegram_message(message)
 
 # === הפעלה
